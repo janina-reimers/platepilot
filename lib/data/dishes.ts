@@ -1,4 +1,9 @@
-import type { Dish, DishIngredient } from './types';
+import { c, p, u } from './certainty';
+import { ASIAN_DISHES } from './dishes.asia';
+import { LATIN_AMERICAN_DISHES } from './dishes.latin-america';
+import { MEDITERRANEAN_DISHES } from './dishes.mediterranean';
+import { MIDDLE_EASTERN_DISHES } from './dishes.middle-east';
+import type { Dish } from './types';
 
 /**
  * PlatePilot's dish library.
@@ -13,25 +18,14 @@ import type { Dish, DishIngredient } from './types';
  * The library is deliberately conservative. Where a kitchen has a real choice
  * (butter or oil, house stock or a cube), the entry stays "unknown" so the app
  * asks instead of assuming.
+ *
+ * Regional menus live in their own files - `dishes.asia.ts`,
+ * `dishes.mediterranean.ts`, `dishes.middle-east.ts`,
+ * `dishes.latin-america.ts` - and are joined onto `DISHES` at the bottom.
  */
 
-const c = (ingredientId: string, note?: string): DishIngredient => ({
-  ingredientId,
-  certainty: 'confirmed',
-  ...(note ? { note } : {}),
-});
-const p = (ingredientId: string, note?: string): DishIngredient => ({
-  ingredientId,
-  certainty: 'possible',
-  ...(note ? { note } : {}),
-});
-const u = (ingredientId: string, note?: string): DishIngredient => ({
-  ingredientId,
-  certainty: 'unknown',
-  ...(note ? { note } : {}),
-});
-
-export const DISHES: Dish[] = [
+/** European, British, American and cross-menu staples. */
+const CORE_DISHES: Dish[] = [
   // ------------------------------------------------------ starters & salads
   {
     id: 'caesar-salad',
@@ -806,7 +800,7 @@ export const DISHES: Dish[] = [
   {
     id: 'chicken-curry',
     name: 'Chicken curry',
-    aliases: ['curry', 'chicken masala', 'chicken tikka masala'],
+    aliases: ['curry', 'chicken masala', 'house curry'],
     cuisine: 'Indian',
     summary: 'Chicken in a spiced sauce, usually built on onion, tomato and cream or yoghurt.',
     ingredients: [
@@ -945,7 +939,7 @@ export const DISHES: Dish[] = [
   {
     id: 'fried-rice',
     name: 'Fried rice',
-    aliases: ['egg fried rice', 'nasi goreng', 'special fried rice'],
+    aliases: ['egg fried rice', 'special fried rice', 'yang chow fried rice'],
     cuisine: 'Asian',
     summary: 'Cooked rice fried with egg, vegetables and a salty sauce.',
     ingredients: [
@@ -1034,7 +1028,7 @@ export const DISHES: Dish[] = [
   {
     id: 'quinoa-bowl',
     name: 'Grain bowl',
-    aliases: ['quinoa bowl', 'buddha bowl', 'power bowl', 'poke bowl'],
+    aliases: ['quinoa bowl', 'buddha bowl', 'power bowl', 'veggie bowl'],
     cuisine: 'International',
     summary: 'A grain base with vegetables, a protein and a dressing on top.',
     ingredients: [
@@ -1379,6 +1373,14 @@ export const DISHES: Dish[] = [
     ],
     openQuestions: ['Is the smoothie blended with yoghurt, milk or just fruit and juice?'],
   },
+];
+
+export const DISHES: Dish[] = [
+  ...CORE_DISHES,
+  ...ASIAN_DISHES,
+  ...MEDITERRANEAN_DISHES,
+  ...MIDDLE_EASTERN_DISHES,
+  ...LATIN_AMERICAN_DISHES,
 ];
 
 export const DISHES_BY_ID: Record<string, Dish> = Object.fromEntries(

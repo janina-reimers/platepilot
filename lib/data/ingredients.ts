@@ -1,3 +1,4 @@
+import { WORLD_INGREDIENTS } from './ingredients.world';
 import type { Ingredient } from './types';
 
 /**
@@ -1218,11 +1219,17 @@ const list: Ingredient[] = [
   },
 ];
 
+/**
+ * The core catalogue plus the regional pantry from `ingredients.world.ts`.
+ * They are kept in two files only so each stays readable.
+ */
+const all: Ingredient[] = [...list, ...WORLD_INGREDIENTS];
+
 export const INGREDIENTS: Record<string, Ingredient> = Object.fromEntries(
-  list.map((ingredient) => [ingredient.id, ingredient]),
+  all.map((ingredient) => [ingredient.id, ingredient]),
 );
 
-export const INGREDIENT_LIST = list;
+export const INGREDIENT_LIST = all;
 
 export function getIngredient(id: string): Ingredient | undefined {
   return INGREDIENTS[id];
