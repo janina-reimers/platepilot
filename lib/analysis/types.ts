@@ -51,13 +51,23 @@ export type MenuLine = {
   description?: string;
   /** The heading the dish sat under, e.g. "Starters". */
   section?: string;
+  /** The same dish said plainly in English, when the menu used other wording. */
+  englishName?: string;
+  /** Recipe the reader recognised the dish as, when it recognised one. */
+  libraryDishId?: string;
   /** Ingredients the menu itself names, mapped to the catalogue. */
   statedIngredientIds?: string[];
   /** Ingredients the menu names that the catalogue does not cover. */
   unplacedIngredients?: string[];
 };
 
-export type MatchedVia = 'exact' | 'alias' | 'keyword' | 'none';
+/**
+ * How a menu line was tied to a recipe.
+ *
+ * `reader` means the menu reader recognised the dish, which is how a name in
+ * another language reaches an English recipe.
+ */
+export type MatchedVia = 'exact' | 'alias' | 'keyword' | 'reader' | 'none';
 
 export type Finding = {
   triggerId: string;

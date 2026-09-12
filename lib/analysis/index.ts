@@ -1,8 +1,8 @@
 import { DISHES_BY_ID } from '@/lib/data/dishes';
 import { getIngredient } from '@/lib/data/ingredients';
 import type { Dish, DishIngredient } from '@/lib/data/types';
-import { matchDish } from './match';
-import { describeProfile, resolveTriggers } from './profile';
+import { type DishMatch, matchDishAny } from './match';
+import { describeProfile, normalise, resolveTriggers } from './profile';
 import { buildDishQuestions, buildGeneralQuestions, unknownDishQuestions } from './questions';
 import { BAND_HEADLINE, buildReasons, findTriggerHits, scoreDish } from './score';
 import type { DishAnalysis, MenuAnalysis, MenuLine, Profile } from './types';
@@ -16,6 +16,13 @@ export * from './types';
 
 /** A dish we only know from the menu text can never read as a confident yes. */
 const MENU_TEXT_CEILING = 8;
+
+/**
+ * How much we trust the reader when it says a printed dish is one of our
+ * recipes. High, but never a literal name match, so results still say
+ * which recipe was used.
+ */
+const READER_CONFIDENCE = 0.9;
 
 /**
  * Menu wording that points at a part of the dish a printed menu cannot settle.
@@ -81,7 +88,9 @@ function withMenuIngredients(dish: Dish, statedIds: string[]): Dish {
 
 /** Build a one-off dish from nothing but the menu's own words. */
 function menuTextDish(line: MenuLine, statedIds: string[]): Dish {
-  const text = `${line.raw} ${line.description ?? ''}`;
+  // The English wording is included so the wording rules below still fire on a
+  // menu written in another language.
+  const text = `${line.raw} ${line.englishName ?? ''} ${line.description ?? ''}`;
   const gapIds = ['unknown-cooking-fat'];
 
   for (const rule of GAP_RULES) {
@@ -113,6 +122,21 @@ function menuTextDish(line: MenuLine, statedIds: string[]): Dish {
 }
 
 /**
+ * Find the recipe behind a menu line.
+ *
+ * Three ways in, most reliable first: the reader told us which recipe the dish
+ * is, the words printed on the menu match a recipe, or the plain-English name
+ * the reader gave the dish matches one. The last of those is what lets a menu
+ * in another language reach a recipe at all.
+ */
+function findRecipe(line: MenuLine): DishMatch {
+  const named = line.libraryDishId ? DISHES_BY_ID[line.libraryDishId] : undefined;
+  if (named) return { dish: named, confidence: READER_CONFIDENCE, matchedVia: 'reader' };
+
+  return matchDishAny([line.raw, line.englishName]);
+}
+
+/**
  * Run one menu line against a profile.
  *
  * Three levels of knowledge, and the result always says which one it used:
@@ -122,7 +146,7 @@ function menuTextDish(line: MenuLine, statedIds: string[]): Dish {
 export function analyseLine(line: MenuLine, profile: Profile): DishAnalysis {
   const triggers = resolveTriggers(profile);
   const stated = knownIngredientIds(line.statedIngredientIds);
-  const { dish: known, confidence, matchedVia } = matchDish(line.raw);
+  const { dish: known, confidence, matchedVia } = findRecipe(line);
 
   const base = {
     lineId: line.id,
@@ -136,6 +160,14 @@ export function analyseLine(line: MenuLine, profile: Profile): DishAnalysis {
     const dish = withMenuIngredients(known, stated);
     const findings = findTriggerHits(dish, triggers);
     const result = scoreDish(dish, findings, confidence);
+    const reasons = buildReasons(dish, findings, result, confidence);
+
+    // The printed name and our recipe name can differ, so say which recipe was used.
+    if (confidence >= 0.6 && normalise(line.raw) !== normalise(dish.name)) {
+      reasons.unshift(
+        `We read this as ${dish.name.toLowerCase()}, so what follows comes from our recipe for that dish.`,
+      );
+    }
 
     return {
       ...base,
@@ -149,7 +181,7 @@ export function analyseLine(line: MenuLine, profile: Profile): DishAnalysis {
       score: result.score,
       band: result.band,
       headline: BAND_HEADLINE[result.band],
-      reasons: buildReasons(dish, findings, result, confidence),
+      reasons,
       findings,
       questions: buildDishQuestions(dish, findings),
     };

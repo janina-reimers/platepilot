@@ -55,6 +55,29 @@ export type DishMatch = {
 };
 
 /**
+ * How many different dishes a word appears in.
+ *
+ * A word that belongs to exactly one dish, like "carbonara" or "margherita",
+ * identifies that dish on its own. A word shared by many, like "soup" or
+ * "grilled", identifies nothing.
+ */
+const TOKEN_OWNERS = new Map<string, Set<string>>();
+for (const entry of SEARCH_TERMS) {
+  for (const token of entry.tokens) {
+    const owners = TOKEN_OWNERS.get(token) ?? new Set<string>();
+    owners.add(entry.dish.id);
+    TOKEN_OWNERS.set(token, owners);
+  }
+}
+
+/** Confidence given to a dish named by one word that belongs to it alone. */
+const DISTINCTIVE_CONFIDENCE = 0.74;
+
+function isDistinctive(token: string): boolean {
+  return token.length >= 4 && TOKEN_OWNERS.get(token)?.size === 1;
+}
+
+/**
  * Match one menu line to a dish in the library.
  *
  * Deliberately cautious: a weak match returns nothing so the app says "we do
@@ -82,13 +105,21 @@ export function matchDish(rawText: string): DishMatch {
       confidence = 0.88;
       via = entry.isAlias ? 'alias' : 'exact';
     } else {
-      const matched = entry.tokens.filter((token) => lineTokens.includes(token)).length;
-      if (matched === 0) continue;
-      const termCover = matched / entry.tokens.length;
-      const lineCover = matched / lineTokens.length;
+      const matched = entry.tokens.filter((token) => lineTokens.includes(token));
+      if (matched.length === 0) continue;
+
+      const termCover = matched.length / entry.tokens.length;
+      const lineCover = matched.length / lineTokens.length;
       confidence = termCover * 0.7 + lineCover * 0.3;
-      // A single shared common word is not a match.
-      if (matched === 1 && entry.tokens.length > 1) confidence *= 0.6;
+
+      if (matched.some(isDistinctive)) {
+        // The shared word names this dish and nothing else, so partial overlap
+        // is still a real match: "Carbonara" is the spaghetti carbonara recipe.
+        confidence = Math.max(confidence, DISTINCTIVE_CONFIDENCE);
+      } else if (matched.length === 1 && entry.tokens.length > 1) {
+        // A single shared common word is not a match.
+        confidence *= 0.6;
+      }
     }
 
     if (confidence > best.confidence) {
@@ -97,5 +128,23 @@ export function matchDish(rawText: string): DishMatch {
   }
 
   if (best.confidence < 0.5) return { dish: null, confidence: best.confidence, matchedVia: 'none' };
+  return best;
+}
+
+/**
+ * Match against several wordings of the same dish and keep the best.
+ *
+ * Used so a menu in another language can be matched on the plain-English name
+ * the reader gave us as well as on the words actually printed on the page.
+ */
+export function matchDishAny(candidates: (string | undefined)[]): DishMatch {
+  let best: DishMatch = { dish: null, confidence: 0, matchedVia: 'none' };
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const result = matchDish(candidate);
+    if (result.confidence > best.confidence) best = result;
+  }
+
   return best;
 }

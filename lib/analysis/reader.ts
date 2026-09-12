@@ -1,5 +1,6 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { bilt } from '@/lib/bilt';
+import { DISHES } from '@/lib/data/dishes';
 import { INGREDIENT_LIST } from '@/lib/data/ingredients';
 import { normalise } from './profile';
 import type { MenuLine } from './types';
@@ -11,6 +12,10 @@ import type { MenuLine } from './types';
  * printed on the page. It is told never to fill in what a dish "usually"
  * contains: recipe knowledge comes from PlatePilot's own library, so the two
  * sources stay separate and we can always say where a claim came from.
+ *
+ * It IS asked which of our recipes each printed dish is, and to say the dish
+ * plainly in English. That is only recognition, not recipe knowledge, and it is
+ * what lets a German or Italian menu reach an English recipe.
  */
 
 const MAX_WIDTH = 1600;
@@ -20,6 +25,13 @@ const READER_ID = 'cloud-vision';
 const INGREDIENT_OPTIONS = INGREDIENT_LIST.filter((item) => !item.isUnknownElement).map(
   ({ id, name }) => ({ id, name }),
 );
+
+/** The recipes the reader may recognise a printed dish as. */
+const DISH_OPTIONS = DISHES.map(({ id, name, aliases }) => ({
+  id,
+  name,
+  aliases: aliases.slice(0, 4),
+}));
 
 const NAME_TOKENS: { id: string; tokens: string[] }[] = INGREDIENT_OPTIONS.map((option) => ({
   id: option.id,
@@ -81,8 +93,10 @@ export type MenuReadResult = {
 
 type CloudMenuItem = {
   name: string;
+  englishName?: string | null;
   description: string | null;
   section: string | null;
+  libraryDishId?: string | null;
   statedIngredientIds: string[];
   otherStatedIngredients: string[];
 };
@@ -128,6 +142,8 @@ function toMenuLines(items: CloudMenuItem[]): MenuLine[] {
       raw: item.name,
       description: item.description ?? undefined,
       section: item.section ?? undefined,
+      englishName: item.englishName ?? undefined,
+      libraryDishId: item.libraryDishId ?? undefined,
       statedIngredientIds: [...stated],
       unplacedIngredients: unplaced.length > 0 ? unplaced.slice(0, 6) : undefined,
     };
@@ -168,7 +184,12 @@ export async function readMenuPhoto(
 
   onStage?.('reading');
   const { data, error } = await bilt.functions.invoke<CloudReadResponse>('read-menu', {
-    body: { image, mimeType: 'image/jpeg', ingredientOptions: INGREDIENT_OPTIONS },
+    body: {
+      image,
+      mimeType: 'image/jpeg',
+      ingredientOptions: INGREDIENT_OPTIONS,
+      dishOptions: DISH_OPTIONS,
+    },
   });
 
   if (error || !data) {
