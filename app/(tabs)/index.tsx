@@ -23,7 +23,9 @@ export default function HomeScreen() {
       </View>
 
       <View className="gap-2">
-        <Typography type="h2">Where are you eating?</Typography>
+        <Typography type="h2" className="text-center">
+          What&apos;s on the menu today?
+        </Typography>
         <Typography className="text-muted text-sm leading-6">
           Photograph the menu and PlatePilot reads it for you, then scores each dish against your
           profile.

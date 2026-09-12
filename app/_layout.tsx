@@ -136,7 +136,7 @@ export default function RootLayout() {
     if (!loaded && !error) return undefined;
 
     void SplashScreen.hideAsync();
-    const timer = setTimeout(() => setShowStartupScreen(false), 1400);
+    const timer = setTimeout(() => setShowStartupScreen(false), 3000);
     return () => clearTimeout(timer);
   }, [loaded, error]);
 
