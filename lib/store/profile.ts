@@ -2,7 +2,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { createCustomAvoid } from '@/lib/analysis/profile';
-import { EMPTY_PROFILE, type Profile, type Strictness } from '@/lib/analysis/types';
+import {
+  EMPTY_PROFILE,
+  type CustomAvoid,
+  type Profile,
+  type ProfileIntolerance,
+  type Strictness,
+} from '@/lib/analysis/types';
+import { INTOLERANCES_BY_ID } from '@/lib/data/triggers';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isCustomAvoid(value: unknown): value is CustomAvoid {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.text === 'string' &&
+    Array.isArray(value.matchedIngredientIds) &&
+    value.matchedIngredientIds.every((id) => typeof id === 'string')
+  );
+}
 
 type ProfileState = {
   profile: Profile;
@@ -10,7 +31,6 @@ type ProfileState = {
   setHydrated: () => void;
   toggleIntolerance: (id: string) => void;
   setStrictness: (id: string, strictness: Strictness) => void;
-  toggleCondition: (id: string) => void;
   addCustomAvoid: (text: string) => void;
   removeCustomAvoid: (id: string) => void;
   completeOnboarding: () => void;
@@ -52,16 +72,6 @@ export const useProfileStore = create<ProfileState>()(
           },
         })),
 
-      toggleCondition: (id) =>
-        set((state) => ({
-          profile: {
-            ...state.profile,
-            conditionIds: state.profile.conditionIds.includes(id)
-              ? state.profile.conditionIds.filter((item) => item !== id)
-              : [...state.profile.conditionIds, id],
-          },
-        })),
-
       addCustomAvoid: (text) =>
         set((state) => {
           const trimmed = text.trim();
@@ -88,8 +98,36 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: 'platepilot-profile',
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ profile: state.profile }),
+      /**
+       * Older profiles could hold conditions and allergen entries that the app
+       * no longer offers. Drop anything we cannot check against any more, so a
+       * profile never claims to be watching something it is not.
+       */
+      migrate: (persisted) => {
+        const stored = isRecord(persisted) ? persisted : {};
+        const profile = isRecord(stored.profile) ? stored.profile : {};
+        const rawIntolerances = Array.isArray(profile.intolerances) ? profile.intolerances : [];
+        const rawCustomAvoids = Array.isArray(profile.customAvoids) ? profile.customAvoids : [];
+        const intolerances: ProfileIntolerance[] = [];
+        for (const item of rawIntolerances) {
+          if (!isRecord(item) || typeof item.id !== 'string') continue;
+          if (INTOLERANCES_BY_ID[item.id] === undefined) continue;
+          intolerances.push({
+            id: item.id,
+            strictness: item.strictness === 'small-amounts' ? 'small-amounts' : 'strict',
+          });
+        }
+        return {
+          profile: {
+            intolerances,
+            customAvoids: rawCustomAvoids.filter(isCustomAvoid),
+            onboarded: Boolean(profile.onboarded),
+          },
+        };
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },
@@ -107,9 +145,5 @@ export function useProfileHydrated(): boolean {
 
 /** True once the user has told us something we can actually check against. */
 export function hasProfileContent(profile: Profile): boolean {
-  return (
-    profile.intolerances.length > 0 ||
-    profile.conditionIds.length > 0 ||
-    profile.customAvoids.length > 0
-  );
+  return profile.intolerances.length > 0 || profile.customAvoids.length > 0;
 }

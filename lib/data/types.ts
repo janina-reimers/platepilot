@@ -148,16 +148,3 @@ export type IntoleranceOption = {
   tags: DietTag[];
   category: 'common' | 'carbohydrate' | 'other';
 };
-
-/** A condition where food choices matter. Produces "keep an eye on" tags. */
-export type ConditionOption = {
-  id: string;
-  label: string;
-  description: string;
-  /** Tags to watch. Never treated as a hard avoid. */
-  watchTags: DietTag[];
-  /** Tags to avoid outright, for conditions where that is the whole point. */
-  avoidTags?: DietTag[];
-  /** Short, non-medical note shown under the condition. */
-  note?: string;
-};

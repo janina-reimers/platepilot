@@ -47,7 +47,6 @@ export function findTriggerHits(dish: Dish, triggers: Trigger[]): Finding[] {
       findings.push({
         triggerId: trigger.id,
         triggerLabel: trigger.label,
-        kind: trigger.kind,
         strictness: trigger.strictness,
         tagLabel: matchedTagLabel(ingredient, trigger),
         ingredientId: ingredient.id,
@@ -61,9 +60,7 @@ export function findTriggerHits(dish: Dish, triggers: Trigger[]): Finding[] {
   const rank: Record<Certainty, number> = { confirmed: 0, possible: 1, unknown: 2 };
   return findings.sort(
     (a, b) =>
-      (a.kind === b.kind ? 0 : a.kind === 'avoid' ? -1 : 1) ||
-      rank[a.certainty] - rank[b.certainty] ||
-      a.ingredientName.localeCompare(b.ingredientName),
+      rank[a.certainty] - rank[b.certainty] || a.ingredientName.localeCompare(b.ingredientName),
   );
 }
 
@@ -71,12 +68,6 @@ const AVOID_PENALTY: Record<Certainty, { strict: number; lenient: number }> = {
   confirmed: { strict: 99, lenient: 4 },
   possible: { strict: 5, lenient: 3 },
   unknown: { strict: 4, lenient: 2 },
-};
-
-const WATCH_PENALTY: Record<Certainty, number> = {
-  confirmed: 2,
-  possible: 1,
-  unknown: 1,
 };
 
 export type ScoreResult = {
@@ -116,22 +107,16 @@ export function scoreDish(
   let deductions = 0;
   let blocked = false;
   let needsAsking = false;
-  let softAsking = false;
 
   for (const finding of worstPerTrigger.values()) {
-    if (finding.kind === 'avoid') {
-      const penalty = AVOID_PENALTY[finding.certainty];
-      const value = finding.strictness === 'strict' ? penalty.strict : penalty.lenient;
-      if (value >= 99) {
-        blocked = true;
-        continue;
-      }
-      deductions += value;
-      if (finding.certainty !== 'confirmed') needsAsking = true;
-    } else {
-      deductions += WATCH_PENALTY[finding.certainty];
-      if (finding.certainty !== 'confirmed') softAsking = true;
+    const penalty = AVOID_PENALTY[finding.certainty];
+    const value = finding.strictness === 'strict' ? penalty.strict : penalty.lenient;
+    if (value >= 99) {
+      blocked = true;
+      continue;
     }
+    deductions += value;
+    if (finding.certainty !== 'confirmed') needsAsking = true;
   }
 
   if (blocked) return { score: 1, band: 'avoid', needsAsking: false, blocked: true };
@@ -143,7 +128,6 @@ export function scoreDish(
     return entry.certainty !== 'confirmed' || ingredient?.isUnknownElement;
   });
   if (hasUnclearPart) score = Math.min(score, 9);
-  if (softAsking) score = Math.min(score, 8);
   if (needsAsking) score = Math.min(score, 6);
   if (confidence < 0.6) score = Math.min(score, 6);
   score = Math.min(score, ceiling);
@@ -195,21 +179,9 @@ export function buildReasons(
     reasons.push(`We matched this to our recipe for ${dish.name}. Check that it is the same dish.`);
   }
 
-  const confirmedAvoid = groupNames(
-    findings.filter((f) => f.kind === 'avoid' && f.certainty === 'confirmed'),
-  );
-  const possibleAvoid = groupNames(
-    findings.filter((f) => f.kind === 'avoid' && f.certainty === 'possible'),
-  );
-  const unknownAvoid = groupNames(
-    findings.filter((f) => f.kind === 'avoid' && f.certainty === 'unknown'),
-  );
-  const watchConfirmed = groupNames(
-    findings.filter((f) => f.kind === 'watch' && f.certainty === 'confirmed'),
-  );
-  const watchUnclear = groupNames(
-    findings.filter((f) => f.kind === 'watch' && f.certainty !== 'confirmed'),
-  );
+  const confirmedAvoid = groupNames(findings.filter((f) => f.certainty === 'confirmed'));
+  const possibleAvoid = groupNames(findings.filter((f) => f.certainty === 'possible'));
+  const unknownAvoid = groupNames(findings.filter((f) => f.certainty === 'unknown'));
 
   if (confirmedAvoid.length > 0) {
     reasons.push(
@@ -221,12 +193,6 @@ export function buildReasons(
   }
   if (unknownAvoid.length > 0) {
     reasons.push(`We cannot tell from a menu whether ${joinList(unknownAvoid)} is involved.`);
-  }
-  if (watchConfirmed.length > 0) {
-    reasons.push(`Worth knowing: it usually brings ${joinList(watchConfirmed)}.`);
-  }
-  if (watchUnclear.length > 0 && watchConfirmed.length === 0) {
-    reasons.push(`It may bring ${joinList(watchUnclear)}, depending on how it is made.`);
   }
 
   if (result.blocked) {

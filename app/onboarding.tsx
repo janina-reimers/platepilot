@@ -8,11 +8,11 @@ import { Disclaimer } from '@/components/Disclaimer';
 import { SelectableRow } from '@/components/SelectableRow';
 import { matchCustomAvoidText } from '@/lib/analysis/profile';
 import type { Strictness } from '@/lib/analysis/types';
-import { CONDITIONS, INTOLERANCES } from '@/lib/data/triggers';
+import { INTOLERANCES } from '@/lib/data/triggers';
 import { useProfileStore } from '@/lib/store/profile';
 import { cn } from '@/lib/utils';
 
-const STEPS = ['Welcome', 'Intolerances', 'Conditions', 'Anything else', 'Review'] as const;
+const STEPS = ['Welcome', 'Intolerances', 'Anything else', 'Review'] as const;
 
 const CATEGORY_TITLES: Record<string, string> = {
   common: 'The most common ones',
@@ -27,7 +27,6 @@ export default function OnboardingScreen() {
   const profile = useProfileStore((state) => state.profile);
   const toggleIntolerance = useProfileStore((state) => state.toggleIntolerance);
   const setStrictness = useProfileStore((state) => state.setStrictness);
-  const toggleCondition = useProfileStore((state) => state.toggleCondition);
   const addCustomAvoid = useProfileStore((state) => state.addCustomAvoid);
   const removeCustomAvoid = useProfileStore((state) => state.removeCustomAvoid);
   const completeOnboarding = useProfileStore((state) => state.completeOnboarding);
@@ -129,6 +128,11 @@ export default function OnboardingScreen() {
               <Typography className="text-muted text-sm leading-6">
                 Pick anything you have been told to avoid. You can change all of this later.
               </Typography>
+              <Typography className="text-muted text-sm leading-6">
+                Severe allergies are not on this list. PlatePilot cannot tell you whether a kitchen
+                is safe for one, so that conversation belongs with the restaurant and your
+                healthcare team.
+              </Typography>
 
               {(['common', 'carbohydrate', 'other'] as const).map((category) => (
                 <View key={category} className="gap-2">
@@ -158,34 +162,6 @@ export default function OnboardingScreen() {
           ) : null}
 
           {step === 2 ? (
-            <View className="gap-4">
-              <Typography type="h3">Anything a doctor is helping you with?</Typography>
-              <Typography className="text-muted text-sm leading-6">
-                These are not treated as strict rules. PlatePilot will simply point out the things
-                that often come up, so you can weigh them up yourself.
-              </Typography>
-
-              <View className="gap-2">
-                {CONDITIONS.map((option) => (
-                  <SelectableRow
-                    key={option.id}
-                    label={option.label}
-                    description={option.description}
-                    selected={profile.conditionIds.includes(option.id)}
-                    onToggle={() => toggleCondition(option.id)}
-                  >
-                    {option.note ? (
-                      <Typography className="text-muted text-xs leading-5">
-                        {option.note}
-                      </Typography>
-                    ) : null}
-                  </SelectableRow>
-                ))}
-              </View>
-            </View>
-          ) : null}
-
-          {step === 3 ? (
             <View className="gap-4">
               <Typography type="h3">Anything else you cannot have?</Typography>
               <Typography className="text-muted text-sm leading-6">
@@ -242,7 +218,7 @@ export default function OnboardingScreen() {
             </View>
           ) : null}
 
-          {step === 4 ? (
+          {step === 3 ? (
             <View className="gap-4">
               <Typography type="h3">Here is your profile</Typography>
 
@@ -253,14 +229,6 @@ export default function OnboardingScreen() {
                   const suffix = item.strictness === 'strict' ? 'completely' : 'in larger amounts';
                   return `${option?.label ?? item.id} — ${suffix}`;
                 })}
-                emptyText="Nothing selected."
-              />
-
-              <ReviewBlock
-                title="You are keeping an eye on"
-                items={profile.conditionIds.map(
-                  (id) => CONDITIONS.find((entry) => entry.id === id)?.label ?? id,
-                )}
                 emptyText="Nothing selected."
               />
 

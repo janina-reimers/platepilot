@@ -65,12 +65,8 @@ export default function DishDetailScreen() {
   const titles = source === 'menu' ? MENU_SECTION_TITLES : SECTION_TITLES;
   const style = BAND_STYLES[analysis.band];
 
-  const flagFor = (ingredientId: string): 'avoid' | 'watch' | undefined => {
-    const hits = analysis.findings.filter((finding) => finding.ingredientId === ingredientId);
-    if (hits.some((finding) => finding.kind === 'avoid')) return 'avoid';
-    if (hits.length > 0) return 'watch';
-    return undefined;
-  };
+  const isFlagged = (ingredientId: string): boolean =>
+    analysis.findings.some((finding) => finding.ingredientId === ingredientId);
 
   const grouped: Record<Certainty, { id: string; name: string; note?: string }[]> = {
     confirmed: [],
@@ -146,8 +142,7 @@ export default function DishDetailScreen() {
             <View className="gap-1">
               <Typography className="text-base font-semibold">What goes into it</Typography>
               <Typography className="text-muted text-sm leading-6">
-                Grouped by how sure we are. Anything tinted red or amber is there because of your
-                profile.
+                Grouped by how sure we are. Anything tinted red is there because of your profile.
               </Typography>
             </View>
 
@@ -166,7 +161,7 @@ export default function DishDetailScreen() {
                       name={item.name}
                       certainty={certainty}
                       note={item.note}
-                      flagged={flagFor(item.id)}
+                      flagged={isFlagged(item.id)}
                     />
                   ))}
                 </View>

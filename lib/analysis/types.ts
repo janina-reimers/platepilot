@@ -18,7 +18,6 @@ export type CustomAvoid = {
 
 export type Profile = {
   intolerances: ProfileIntolerance[];
-  conditionIds: string[];
   customAvoids: CustomAvoid[];
   /** Set once the user has been through onboarding. */
   onboarded: boolean;
@@ -26,27 +25,22 @@ export type Profile = {
 
 export const EMPTY_PROFILE: Profile = {
   intolerances: [],
-  conditionIds: [],
   customAvoids: [],
   onboarded: false,
 };
 
 /**
- * A single thing PlatePilot checks a dish against.
- *
- * `avoid` comes from something the user told us they cannot have.
- * `watch` comes from a condition, where the app flags it but never decides
- * for the user how strict they need to be.
+ * A single thing PlatePilot checks a dish against. Always something the user
+ * told us they cannot have, either a listed intolerance or their own wording.
  */
 export type Trigger = {
   id: string;
   label: string;
-  kind: 'avoid' | 'watch';
   strictness: Strictness;
   tags: DietTag[];
   /** Direct ingredient matches, used for free-text avoids. */
   ingredientIds: string[];
-  source: 'intolerance' | 'condition' | 'custom';
+  source: 'intolerance' | 'custom';
 };
 
 export type MenuLine = {
@@ -68,7 +62,6 @@ export type MatchedVia = 'exact' | 'alias' | 'keyword' | 'none';
 export type Finding = {
   triggerId: string;
   triggerLabel: string;
-  kind: 'avoid' | 'watch';
   strictness: Strictness;
   tagLabel: string;
   ingredientId: string;

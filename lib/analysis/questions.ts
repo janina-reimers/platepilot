@@ -52,14 +52,14 @@ export function unknownDishQuestions(rawText: string): string[] {
 export function buildGeneralQuestions(profile: Profile, triggers: Trigger[]): string[] {
   const questions: string[] = [];
 
-  const avoidLabels = triggers.filter((t) => t.kind === 'avoid').map((t) => t.label.toLowerCase());
+  const avoidLabels = triggers.map((t) => t.label.toLowerCase());
   if (avoidLabels.length > 0) {
     questions.push(
       `I need to avoid ${joinList(avoidLabels.slice(0, 5))}. Could you check the kitchen can handle that?`,
     );
   }
 
-  const strictTriggers = triggers.filter((t) => t.kind === 'avoid' && t.strictness === 'strict');
+  const strictTriggers = triggers.filter((t) => t.strictness === 'strict');
   if (strictTriggers.length > 0) {
     questions.push('Is food for this prepared on a separate surface, with clean utensils?');
     questions.push('Is the fryer shared with breaded or battered items?');

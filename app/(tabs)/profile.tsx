@@ -7,7 +7,7 @@ import { Disclaimer } from '@/components/Disclaimer';
 import { SelectableRow } from '@/components/SelectableRow';
 import { describeProfile, matchCustomAvoidText } from '@/lib/analysis/profile';
 import type { Strictness } from '@/lib/analysis/types';
-import { CONDITIONS, INTOLERANCES } from '@/lib/data/triggers';
+import { INTOLERANCES } from '@/lib/data/triggers';
 import { hasProfileContent, useProfileStore } from '@/lib/store/profile';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +21,6 @@ export default function ProfileScreen() {
   const profile = useProfileStore((state) => state.profile);
   const toggleIntolerance = useProfileStore((state) => state.toggleIntolerance);
   const setStrictness = useProfileStore((state) => state.setStrictness);
-  const toggleCondition = useProfileStore((state) => state.toggleCondition);
   const addCustomAvoid = useProfileStore((state) => state.addCustomAvoid);
   const removeCustomAvoid = useProfileStore((state) => state.removeCustomAvoid);
   const reset = useProfileStore((state) => state.reset);
@@ -84,7 +83,9 @@ export default function ProfileScreen() {
           <View className="gap-1">
             <Typography type="h5">Intolerances</Typography>
             <Typography className="text-muted text-sm leading-6">
-              Anything you have been told to avoid. Choose how strict each one is.
+              Anything you have been told to avoid. Choose how strict each one is. Severe allergies
+              are not covered here, because PlatePilot cannot tell you whether a kitchen is safe for
+              one.
             </Typography>
           </View>
 
@@ -108,32 +109,6 @@ export default function ProfileScreen() {
                 </SelectableRow>
               ))}
             </View>
-          ))}
-        </View>
-
-        <Separator />
-
-        <View className="gap-3">
-          <View className="gap-1">
-            <Typography type="h5">Conditions</Typography>
-            <Typography className="text-muted text-sm leading-6">
-              These are shown as things to keep an eye on, never as rules. PlatePilot does not
-              decide how careful you need to be.
-            </Typography>
-          </View>
-
-          {CONDITIONS.map((option) => (
-            <SelectableRow
-              key={option.id}
-              label={option.label}
-              description={option.description}
-              selected={profile.conditionIds.includes(option.id)}
-              onToggle={() => toggleCondition(option.id)}
-            >
-              {option.note ? (
-                <Typography className="text-muted text-xs leading-5">{option.note}</Typography>
-              ) : null}
-            </SelectableRow>
           ))}
         </View>
 

@@ -62,13 +62,12 @@ export default function AboutScreen() {
       </View>
 
       <View className="border-border bg-surface gap-3 rounded-2xl border p-4">
-        <Typography className="text-base font-semibold">
-          Conditions are handled differently
-        </Typography>
+        <Typography className="text-base font-semibold">What it does not cover</Typography>
         <Typography className="text-muted text-sm leading-6">
-          Where you have told us about a condition, PlatePilot points out the things that often come
-          up with it. It does not treat them as rules, because how strict you need to be is between
-          you and the people looking after your health.
+          PlatePilot does not handle severe allergies or medical conditions, so it does not ask you
+          about them. It cannot see a kitchen, so it can never tell you a dish is safe. When the
+          stakes are that high, the restaurant and the people looking after your health decide, not
+          an app.
         </Typography>
       </View>
 
