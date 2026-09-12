@@ -40,6 +40,7 @@ type ScanState = {
   setDraftPhotos: (photos: CapturedPhoto[]) => void;
   setDraftProfileIds: (ids: string[]) => void;
   saveScan: (scan: Omit<Scan, 'id' | 'createdAt'>) => string;
+  renameScan: (id: string, name: string) => void;
   removeScan: (id: string) => void;
   clearHistory: () => void;
   toggleFavorite: (scanId: string, lineId: string) => void;
@@ -70,6 +71,19 @@ export const useScanStore = create<ScanState>()(
           draftProfileIds: [],
         }));
         return id;
+      },
+
+      renameScan: (id, name) => {
+        const trimmedName = name.trim().slice(0, 60);
+        if (!trimmedName) return;
+        set((state) => ({
+          scans: state.scans.map((scan) =>
+            scan.id === id ? { ...scan, place: trimmedName } : scan,
+          ),
+          favorites: state.favorites.map((favorite) =>
+            favorite.scanId === id ? { ...favorite, place: trimmedName } : favorite,
+          ),
+        }));
       },
 
       removeScan: (id) => set((state) => ({ scans: state.scans.filter((scan) => scan.id !== id) })),
