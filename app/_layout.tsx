@@ -2,6 +2,7 @@
 import '../global.css';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -10,10 +11,10 @@ import {
   useFonts,
 } from '@expo-google-fonts/inter';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
-import { Platform } from 'react-native';
-import { useEffect } from 'react';
+import { Platform, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import * as DevClient from 'expo-dev-client';
-import { HeroUINativeProvider, useThemeColor } from 'heroui-native';
+import { HeroUINativeProvider, Typography, useThemeColor } from 'heroui-native';
 import { Uniwind } from 'uniwind';
 import {
   ErrorBoundary as ExpoErrorBoundary,
@@ -25,6 +26,7 @@ import {
 import { initPostHog } from '@/lib/posthog';
 import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
+import { BrandLogo } from '@/components/BrandLogo';
 import { InstallPrompt } from '@/components/InstallPrompt';
 
 /**
@@ -49,7 +51,9 @@ Uniwind.setTheme('light');
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [showStartupScreen, setShowStartupScreen] = useState(true);
   const [loaded, error] = useFonts({
+    Fredoka_700Bold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -129,9 +133,11 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (loaded || error) {
-      void SplashScreen.hideAsync();
-    }
+    if (!loaded && !error) return undefined;
+
+    void SplashScreen.hideAsync();
+    const timer = setTimeout(() => setShowStartupScreen(false), 1400);
+    return () => clearTimeout(timer);
   }, [loaded, error]);
 
   if (!loaded && !error) {
@@ -141,8 +147,23 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
-        <RootStack />
-        <InstallPrompt />
+        {showStartupScreen ? (
+          <View className="bg-background flex-1 items-center justify-center gap-6 px-6">
+            <BrandLogo size={240} />
+            <Typography
+              accessibilityRole="header"
+              className="text-ink text-center text-2xl"
+              style={{ fontFamily: 'Fredoka_700Bold' }}
+            >
+              Safe dish. Happy you.
+            </Typography>
+          </View>
+        ) : (
+          <>
+            <RootStack />
+            <InstallPrompt />
+          </>
+        )}
       </HeroUINativeProvider>
     </GestureHandlerRootView>
   );
