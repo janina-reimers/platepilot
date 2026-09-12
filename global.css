@@ -71,15 +71,15 @@
  * grey so "not enough information" never reads as a mild pass.
  */
 @theme {
-  --color-score-avoid: oklch(0.52 0.19 25);
+  --color-score-avoid: oklch(0.6527 0.2336 31.3);
   --color-score-avoid-soft: oklch(0.958 0.028 25);
   --color-score-avoid-line: oklch(0.86 0.07 25);
 
-  --color-score-ask: oklch(0.56 0.13 62);
+  --color-score-ask: oklch(0.822 0.1664 78.2);
   --color-score-ask-soft: oklch(0.962 0.042 80);
   --color-score-ask-line: oklch(0.86 0.09 78);
 
-  --color-score-good: oklch(0.48 0.13 152);
+  --color-score-good: oklch(0.6614 0.2027 139.7);
   --color-score-good-soft: oklch(0.955 0.045 152);
   --color-score-good-line: oklch(0.84 0.09 152);
 

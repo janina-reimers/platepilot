@@ -4,6 +4,13 @@ import type { ScoreBand } from '@/lib/analysis/types';
 import { BAND_STYLES } from '@/lib/bands';
 import { cn } from '@/lib/utils';
 
+function getScoreColorBand(score: number | null, fallbackBand: ScoreBand): ScoreBand {
+  if (score === null) return fallbackBand;
+  if (score < 5) return 'avoid';
+  if (score < 7) return 'ask';
+  return 'good';
+}
+
 type Size = 'sm' | 'md' | 'lg';
 
 const BOX: Record<Size, string> = {
@@ -27,18 +34,13 @@ type ScoreBadgeProps = {
 
 /** The 1-10 score, colour coded. A dash means we could not score the dish. */
 export function ScoreBadge({ score, band, size = 'md', className }: ScoreBadgeProps) {
-  const style = BAND_STYLES[band];
+  const style = BAND_STYLES[getScoreColorBand(score, band)];
 
   return (
     <View className={cn('items-center justify-center', BOX[size], style.solid, className)}>
       <Typography className={cn('leading-none font-bold', NUMBER[size], style.onSolid)}>
         {score === null ? '?' : score}
       </Typography>
-      {score !== null && size !== 'sm' ? (
-        <Typography className={cn('text-[10px] leading-none opacity-80', style.onSolid)}>
-          of 10
-        </Typography>
-      ) : null}
     </View>
   );
 }

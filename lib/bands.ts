@@ -21,7 +21,7 @@ export type BandStyle = {
 export const BAND_STYLES: Record<ScoreBand, BandStyle> = {
   avoid: {
     solid: 'bg-score-avoid',
-    onSolid: 'text-white',
+    onSolid: 'text-ink',
     soft: 'bg-score-avoid-soft',
     line: 'border-score-avoid-line',
     text: 'text-score-avoid',
@@ -29,7 +29,7 @@ export const BAND_STYLES: Record<ScoreBand, BandStyle> = {
   },
   ask: {
     solid: 'bg-score-ask',
-    onSolid: 'text-white',
+    onSolid: 'text-ink',
     soft: 'bg-score-ask-soft',
     line: 'border-score-ask-line',
     text: 'text-score-ask',
@@ -37,7 +37,7 @@ export const BAND_STYLES: Record<ScoreBand, BandStyle> = {
   },
   good: {
     solid: 'bg-score-good',
-    onSolid: 'text-white',
+    onSolid: 'text-ink',
     soft: 'bg-score-good-soft',
     line: 'border-score-good-line',
     text: 'text-score-good',
@@ -45,7 +45,7 @@ export const BAND_STYLES: Record<ScoreBand, BandStyle> = {
   },
   strong: {
     solid: 'bg-score-good',
-    onSolid: 'text-white',
+    onSolid: 'text-ink',
     soft: 'bg-score-good-soft',
     line: 'border-score-good-line',
     text: 'text-score-good',
@@ -68,8 +68,8 @@ export const SCALE_STEPS: { range: string; band: ScoreBand; meaning: string }[] 
     band: 'good',
     meaning: 'Looks workable, with one or two small things to note.',
   },
-  { range: '4 - 6', band: 'ask', meaning: 'Something needs checking with the kitchen first.' },
-  { range: '1 - 3', band: 'avoid', meaning: 'Contains something you told us to avoid.' },
+  { range: '5 - 6', band: 'ask', meaning: 'Something needs checking with the kitchen first.' },
+  { range: '0 - 4', band: 'avoid', meaning: 'Contains something you told us to avoid.' },
   { range: '—', band: 'unknown', meaning: 'We do not know the recipe, so we do not guess.' },
 ];
 
@@ -78,9 +78,9 @@ export const SCALE_STEPS: { range: string; band: ScoreBand; meaning: string }[] 
  * that cannot read a class name. Keep these in step with global.css.
  */
 export const BAND_HEX: Record<ScoreBand, string> = {
-  avoid: '#A82A1E',
-  ask: '#87590F',
-  good: '#1E6942',
-  strong: '#1E6942',
+  avoid: '#FF3B1F',
+  ask: '#FFB51B',
+  good: '#3FAE18',
+  strong: '#3FAE18',
   unknown: '#6A6E75',
 };

@@ -43,11 +43,14 @@ export function DishResultCard({ analysis, onPress }: DishResultCardProps) {
           <ScoreBadge score={analysis.score} band={analysis.band} size="md" />
 
           <View className="flex-1 gap-0.5">
-            <Typography className="text-base font-semibold" numberOfLines={2}>
+            <Typography className="text-base font-bold" numberOfLines={2}>
               {analysis.dishName}
             </Typography>
             <Typography className={cn('text-xs font-medium', style.text)}>
-              {analysis.headline} · Confidence: {confidence}
+              {analysis.headline}
+            </Typography>
+            <Typography className={cn('text-xs font-medium', style.text)}>
+              Confidence: {confidence}
             </Typography>
           </View>
 
