@@ -3,6 +3,7 @@ import { Camera, ChevronRight, CircleHelp, Utensils } from 'lucide-react-native'
 import { Link, router } from 'expo-router';
 import { Button, Separator, Typography, useThemeColor } from 'heroui-native';
 import { Pressable, ScrollView, View } from 'react-native';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Disclaimer } from '@/components/Disclaimer';
 import { ScoreBadge } from '@/components/ScoreBadge';
 import { describeProfile } from '@/lib/analysis/profile';
@@ -17,6 +18,8 @@ export default function HomeScreen() {
 
   return (
     <ScrollView className="bg-background flex-1" contentContainerClassName="gap-5 px-5 pt-2 pb-10">
+      <BrandLogo size={126} />
+
       <View className="gap-2">
         <Typography type="h2" className="text-center">
           What&apos;s on the menu today?
