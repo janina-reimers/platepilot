@@ -1,7 +1,7 @@
 import { DISHES } from '@/lib/data/dishes';
 import type { Dish } from '@/lib/data/types';
 import { normalise } from './profile';
-import type { MatchedVia, MenuLine } from './types';
+import type { MatchedVia } from './types';
 
 const STOPWORDS = new Set([
   'the',
@@ -98,48 +98,4 @@ export function matchDish(rawText: string): DishMatch {
 
   if (best.confidence < 0.5) return { dish: null, confidence: best.confidence, matchedVia: 'none' };
   return best;
-}
-
-/** Split pasted or typed menu text into one line per dish. */
-export function parseMenuText(text: string): MenuLine[] {
-  const seen = new Set<string>();
-  return text
-    .split(/[\n\r;•·|]+/)
-    .map((part) => part.replace(/^[\s\-–—*\d.)]+/, '').trim())
-    .map((part) => part.replace(/\s*[.…]*\s*(?:[€£$]\s?\d+[.,]?\d*|\d+[.,]\d{2})\s*$/, '').trim())
-    .filter((part) => part.length >= 3 && /[a-zA-Z]/.test(part))
-    .filter((part) => {
-      const key = normalise(part);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((raw, index) => ({
-      id: `line-${index}-${normalise(raw).replace(/\s/g, '-').slice(0, 40)}`,
-      raw,
-    }));
-}
-
-/** Dishes whose name starts with the query, for the manual entry autocomplete. */
-export function suggestDishes(query: string, limit = 8): Dish[] {
-  const q = normalise(query);
-  if (q.length < 2) return [];
-  const scored: { dish: Dish; rank: number }[] = [];
-  const seen = new Set<string>();
-
-  for (const entry of SEARCH_TERMS) {
-    if (seen.has(entry.dish.id)) continue;
-    if (entry.term.startsWith(q)) {
-      scored.push({ dish: entry.dish, rank: 0 });
-      seen.add(entry.dish.id);
-    } else if (entry.term.includes(q)) {
-      scored.push({ dish: entry.dish, rank: 1 });
-      seen.add(entry.dish.id);
-    }
-  }
-
-  return scored
-    .sort((a, b) => a.rank - b.rank || a.dish.name.localeCompare(b.dish.name))
-    .slice(0, limit)
-    .map((item) => item.dish);
 }

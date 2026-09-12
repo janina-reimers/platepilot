@@ -1,4 +1,6 @@
 import { DISHES_BY_ID } from '@/lib/data/dishes';
+import { getIngredient } from '@/lib/data/ingredients';
+import type { Dish, DishIngredient } from '@/lib/data/types';
 import { matchDish } from './match';
 import { describeProfile, resolveTriggers } from './profile';
 import { buildDishQuestions, buildGeneralQuestions, unknownDishQuestions } from './questions';
@@ -12,56 +14,188 @@ export * from './reader';
 export * from './score';
 export * from './types';
 
+/** A dish we only know from the menu text can never read as a confident yes. */
+const MENU_TEXT_CEILING = 8;
+
+/**
+ * Menu wording that points at a part of the dish a printed menu cannot settle.
+ *
+ * These are the app's own additions, kept separate from what the menu says, and
+ * always reported as something only the kitchen can answer.
+ */
+const GAP_RULES: { id: string; pattern: RegExp }[] = [
+  {
+    id: 'unknown-house-sauce',
+    pattern: /\b(sauce|sauced|glaze|glazed|jus|gravy|dip|aioli|pesto|salsa|coulis|drizzle)\b/i,
+  },
+  { id: 'unknown-dressing', pattern: /\b(salad|slaw|dressing|vinaigrette|bowl)\b/i },
+  {
+    id: 'shared-fryer',
+    pattern: /\b(fried|fries|chips|tempura|battered|crispy|breaded|crumbed|schnitzel|nuggets)\b/i,
+  },
+  {
+    id: 'unknown-marinade',
+    pattern: /\b(marinated|marinade|skewer|kebab|satay|teriyaki|wings)\b/i,
+  },
+  {
+    id: 'unknown-stock',
+    pattern: /\b(soup|broth|stock|risotto|stew|casserole|ramen|pho|curry)\b/i,
+  },
+  { id: 'unknown-thickener', pattern: /\b(creamy|veloute|bisque|chowder|thick)\b/i },
+  {
+    id: 'unknown-bread-side',
+    pattern: /\b(bread|toast|bun|baguette|focaccia|sourdough|crostini)\b/i,
+  },
+  {
+    id: 'unknown-seasoning-blend',
+    pattern: /\b(spiced|spicy|seasoned|rub|cajun|jerk|masala|blackened|peri)\b/i,
+  },
+];
+
+function knownIngredientIds(ids: string[] | undefined): string[] {
+  return (ids ?? []).filter((id) => getIngredient(id));
+}
+
+/**
+ * Fold what the menu printed into a recipe we know.
+ *
+ * If the menu names something our recipe only listed as "sometimes", the menu
+ * settles it: it becomes confirmed.
+ */
+function withMenuIngredients(dish: Dish, statedIds: string[]): Dish {
+  if (statedIds.length === 0) return dish;
+
+  const ingredients: DishIngredient[] = dish.ingredients.map((entry) =>
+    statedIds.includes(entry.ingredientId) && entry.certainty !== 'confirmed'
+      ? { ...entry, certainty: 'confirmed', note: 'The menu names this.' }
+      : entry,
+  );
+
+  for (const id of statedIds) {
+    if (ingredients.some((entry) => entry.ingredientId === id)) continue;
+    ingredients.push({ ingredientId: id, certainty: 'confirmed', note: 'The menu names this.' });
+  }
+
+  return { ...dish, ingredients };
+}
+
+/** Build a one-off dish from nothing but the menu's own words. */
+function menuTextDish(line: MenuLine, statedIds: string[]): Dish {
+  const text = `${line.raw} ${line.description ?? ''}`;
+  const gapIds = ['unknown-cooking-fat'];
+
+  for (const rule of GAP_RULES) {
+    if (rule.pattern.test(text)) gapIds.push(rule.id);
+  }
+
+  const ingredients: DishIngredient[] = [
+    ...statedIds.map(
+      (id): DishIngredient => ({
+        ingredientId: id,
+        certainty: 'confirmed',
+        note: 'The menu names this.',
+      }),
+    ),
+    ...gapIds
+      .filter((id) => getIngredient(id))
+      .map((id): DishIngredient => ({ ingredientId: id, certainty: 'unknown' })),
+  ];
+
+  return {
+    id: `menu-${line.id}`,
+    name: line.raw,
+    aliases: [],
+    cuisine: 'unknown',
+    summary: line.description ?? 'Read from the menu.',
+    ingredients,
+    openQuestions: line.description ? undefined : ['Could you tell me what goes into the {dish}?'],
+  };
+}
+
 /**
  * Run one menu line against a profile.
  *
- * When the library has no recipe for the line, the result is deliberately
- * unscored rather than optimistic.
+ * Three levels of knowledge, and the result always says which one it used:
+ * a recipe we know, only what the menu printed, or nothing at all. Nothing is
+ * ever scored on a guess.
  */
 export function analyseLine(line: MenuLine, profile: Profile): DishAnalysis {
   const triggers = resolveTriggers(profile);
-  const { dish, confidence, matchedVia } = matchDish(line.raw);
+  const stated = knownIngredientIds(line.statedIngredientIds);
+  const { dish: known, confidence, matchedVia } = matchDish(line.raw);
 
-  if (!dish) {
+  const base = {
+    lineId: line.id,
+    rawText: line.raw,
+    menuDescription: line.description,
+    unplacedIngredients: line.unplacedIngredients,
+    isBestMatch: false,
+  };
+
+  if (known) {
+    const dish = withMenuIngredients(known, stated);
+    const findings = findTriggerHits(dish, triggers);
+    const result = scoreDish(dish, findings, confidence);
+
     return {
-      lineId: line.id,
-      rawText: line.raw,
-      dishId: null,
-      dishName: line.raw,
-      summary: 'PlatePilot does not have a recipe for this dish yet.',
+      ...base,
+      dishId: dish.id,
+      dishName: dish.name,
+      summary: dish.summary,
+      source: 'library',
+      ingredients: dish.ingredients,
       confidence,
-      matchedVia: 'none',
-      score: null,
-      band: 'unknown',
-      headline: BAND_HEADLINE.unknown,
-      reasons: [
-        'We could not match this to a recipe we know, so there is nothing to score.',
-        'Ask the kitchen what goes into it before you decide.',
-      ],
-      findings: [],
-      questions: unknownDishQuestions(line.raw),
-      isBestMatch: false,
+      matchedVia,
+      score: result.score,
+      band: result.band,
+      headline: BAND_HEADLINE[result.band],
+      reasons: buildReasons(dish, findings, result, confidence),
+      findings,
+      questions: buildDishQuestions(dish, findings),
     };
   }
 
-  const findings = findTriggerHits(dish, triggers);
-  const result = scoreDish(dish, findings, confidence);
+  if (stated.length > 0) {
+    const dish = menuTextDish(line, stated);
+    const findings = findTriggerHits(dish, triggers);
+    const result = scoreDish(dish, findings, 1, MENU_TEXT_CEILING);
+
+    return {
+      ...base,
+      dishId: null,
+      dishName: line.raw,
+      summary: dish.summary,
+      source: 'menu',
+      ingredients: dish.ingredients,
+      confidence: 0,
+      matchedVia: 'none',
+      score: result.score,
+      band: result.band,
+      headline: BAND_HEADLINE[result.band],
+      reasons: buildReasons(dish, findings, result, 1, 'menu'),
+      findings,
+      questions: buildDishQuestions(dish, findings),
+    };
+  }
 
   return {
-    lineId: line.id,
-    rawText: line.raw,
-    dishId: dish.id,
-    dishName: dish.name,
-    summary: dish.summary,
+    ...base,
+    dishId: null,
+    dishName: line.raw,
+    summary: 'We only have the name from the menu for this one.',
+    source: 'none',
+    ingredients: [],
     confidence,
-    matchedVia,
-    score: result.score,
-    band: result.band,
-    headline: BAND_HEADLINE[result.band],
-    reasons: buildReasons(dish, findings, result, confidence),
-    findings,
-    questions: buildDishQuestions(dish, findings),
-    isBestMatch: false,
+    matchedVia: 'none',
+    score: null,
+    band: 'unknown',
+    headline: BAND_HEADLINE.unknown,
+    reasons: [
+      'The menu gives only a name here, and we do not have a recipe for it, so there is nothing to score.',
+      'Ask the kitchen what goes into it before you decide.',
+    ],
+    findings: [],
+    questions: unknownDishQuestions(line.raw),
   };
 }
 

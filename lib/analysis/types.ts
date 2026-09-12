@@ -1,4 +1,4 @@
-import type { Certainty, DietTag } from '@/lib/data/types';
+import type { Certainty, DietTag, DishIngredient } from '@/lib/data/types';
 
 /** How closely a user wants a trigger avoided. */
 export type Strictness = 'strict' | 'small-amounts';
@@ -53,6 +53,14 @@ export type MenuLine = {
   id: string;
   /** The dish name as it appears on the menu. */
   raw: string;
+  /** The description the menu prints under the dish, in the menu's own words. */
+  description?: string;
+  /** The heading the dish sat under, e.g. "Starters". */
+  section?: string;
+  /** Ingredients the menu itself names, mapped to the catalogue. */
+  statedIngredientIds?: string[];
+  /** Ingredients the menu names that the catalogue does not cover. */
+  unplacedIngredients?: string[];
 };
 
 export type MatchedVia = 'exact' | 'alias' | 'keyword' | 'none';
@@ -71,12 +79,28 @@ export type Finding = {
 
 export type ScoreBand = 'avoid' | 'ask' | 'good' | 'strong' | 'unknown';
 
+/**
+ * Where the knowledge about a dish came from.
+ *
+ * `library` means PlatePilot recognised the dish and used its own recipe.
+ * `menu` means we only know what the menu printed.
+ * `none` means we know neither, so the dish stays unscored.
+ */
+export type DishSource = 'library' | 'menu' | 'none';
+
 export type DishAnalysis = {
   lineId: string;
   rawText: string;
   dishId: string | null;
   dishName: string;
   summary: string;
+  source?: DishSource;
+  /** The menu's own description, when it printed one. */
+  menuDescription?: string;
+  /** Ingredients used for this result, kept with the scan so it stays readable later. */
+  ingredients?: DishIngredient[];
+  /** Ingredients the menu named that the catalogue does not cover. */
+  unplacedIngredients?: string[];
   confidence: number;
   matchedVia: MatchedVia;
   /** 1-10, or null when there is not enough information to score at all. */

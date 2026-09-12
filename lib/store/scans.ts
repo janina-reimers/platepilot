@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MenuAnalysis, MenuLine } from '@/lib/analysis/types';
+import type { CapturedPhoto } from '@/lib/capture';
 
 export type Scan = {
   id: string;
@@ -18,11 +19,11 @@ export type Scan = {
 
 type ScanState = {
   scans: Scan[];
-  /** The scan currently being built, before it is saved. */
-  draftPhotoUri?: string;
+  /** The photo currently being read, before the scan is saved. */
+  draftPhoto?: CapturedPhoto;
   hydrated: boolean;
   setHydrated: () => void;
-  setDraftPhoto: (uri: string | undefined) => void;
+  setDraftPhoto: (photo: CapturedPhoto | undefined) => void;
   saveScan: (scan: Omit<Scan, 'id' | 'createdAt'>) => string;
   removeScan: (id: string) => void;
   clearHistory: () => void;
@@ -33,12 +34,12 @@ export const useScanStore = create<ScanState>()(
   persist(
     (set) => ({
       scans: [],
-      draftPhotoUri: undefined,
+      draftPhoto: undefined,
       hydrated: false,
 
       setHydrated: () => set({ hydrated: true }),
 
-      setDraftPhoto: (uri) => set({ draftPhotoUri: uri }),
+      setDraftPhoto: (photo) => set({ draftPhoto: photo }),
 
       saveScan: (scan) => {
         const id = `scan-${Date.now()}`;
@@ -47,7 +48,7 @@ export const useScanStore = create<ScanState>()(
             0,
             60,
           ),
-          draftPhotoUri: undefined,
+          draftPhoto: undefined,
         }));
         return id;
       },

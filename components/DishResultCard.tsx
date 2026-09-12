@@ -55,6 +55,12 @@ export function DishResultCard({ analysis, onPress }: DishResultCardProps) {
           </Typography>
         ) : null}
 
+        {analysis.source === 'menu' ? (
+          <Typography className="text-muted text-[11px] font-medium">
+            Read from the menu text
+          </Typography>
+        ) : null}
+
         {analysis.questions.length > 0 ? (
           <Typography className="text-score-ask text-xs font-medium">
             {analysis.questions.length === 1

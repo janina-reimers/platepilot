@@ -25,9 +25,9 @@ export default function AboutScreen() {
       <View className="gap-2">
         <Typography type="h3">How PlatePilot works</Typography>
         <Typography className="text-muted text-sm leading-6">
-          PlatePilot holds a library of the recipes restaurants usually follow. When you enter a
-          dish, it looks up that recipe, checks each ingredient against your profile, and tells you
-          how sure it is about every part.
+          PlatePilot reads the text off your menu photo, then looks each dish up in its library of
+          the recipes restaurants usually follow. It checks each ingredient against your profile and
+          tells you how sure it is about every part.
         </Typography>
       </View>
 
@@ -73,10 +73,11 @@ export default function AboutScreen() {
       </View>
 
       <View className="border-border bg-surface gap-3 rounded-2xl border p-4">
-        <Typography className="text-base font-semibold">Your information stays here</Typography>
+        <Typography className="text-base font-semibold">What happens to your photo</Typography>
         <Typography className="text-muted text-sm leading-6">
-          Your profile, your menu photos and your past scans are stored on this phone. Nothing is
-          sent anywhere, and clearing your profile removes it.
+          Your profile and your past scans are kept on this phone. The menu photo is sent to our
+          reading service to have its text read, and is not stored there. Your profile is never sent
+          with it: the matching against what you avoid happens on your phone.
         </Typography>
       </View>
 

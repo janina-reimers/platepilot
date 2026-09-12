@@ -57,7 +57,12 @@ export default function ResultsScreen() {
       contentContainerClassName="gap-3 px-5 pt-3 pb-10"
       ListHeaderComponent={
         <View className="gap-3 pb-1">
-          <Typography className="text-muted text-sm leading-6">{profileSummary}</Typography>
+          <Typography className="text-muted text-sm leading-6">
+            {dishes.length === 1
+              ? 'We read one dish off your photo.'
+              : `We read ${dishes.length} dishes off your photo.`}{' '}
+            {profileSummary}
+          </Typography>
 
           {bestMatchLineIds.length > 0 ? (
             <View className="border-score-good-line bg-score-good-soft flex-row items-start gap-3 rounded-2xl border p-4">

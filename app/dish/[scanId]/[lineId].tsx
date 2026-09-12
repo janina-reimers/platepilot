@@ -9,8 +9,8 @@ import { EmptyState } from '@/components/EmptyState';
 import { IngredientRow } from '@/components/IngredientRow';
 import { QuestionList } from '@/components/QuestionList';
 import { ScoreBadge } from '@/components/ScoreBadge';
+import type { DishSource } from '@/lib/analysis/types';
 import { BAND_STYLES } from '@/lib/bands';
-import { DISHES_BY_ID } from '@/lib/data/dishes';
 import { getIngredient } from '@/lib/data/ingredients';
 import type { Certainty } from '@/lib/data/types';
 import { goBackOrReplace } from '@/lib/navigation';
@@ -18,9 +18,22 @@ import { useScan } from '@/lib/store/scans';
 import { cn } from '@/lib/utils';
 
 const SECTION_TITLES: Record<Certainty, string> = {
-  confirmed: 'Nearly always in this dish',
+  confirmed: 'In this dish',
   possible: 'Often in this dish',
   unknown: 'Only the kitchen can say',
+};
+
+const MENU_SECTION_TITLES: Record<Certainty, string> = {
+  confirmed: 'Printed on the menu',
+  possible: 'Often in a dish like this',
+  unknown: 'Only the kitchen can say',
+};
+
+const SOURCE_NOTE: Record<DishSource, string> = {
+  library:
+    'We recognised this dish, so this is the recipe we hold for it, plus anything the menu spelled out.',
+  menu: 'We do not hold a recipe for this one, so everything here comes from the menu’s own words.',
+  none: 'The photo gave us a name and nothing else, so there is nothing for us to take apart.',
 };
 
 export default function DishDetailScreen() {
@@ -48,7 +61,8 @@ export default function DishDetailScreen() {
     );
   }
 
-  const dish = analysis.dishId ? DISHES_BY_ID[analysis.dishId] : undefined;
+  const source: DishSource = analysis.source ?? (analysis.dishId ? 'library' : 'none');
+  const titles = source === 'menu' ? MENU_SECTION_TITLES : SECTION_TITLES;
   const style = BAND_STYLES[analysis.band];
 
   const flagFor = (ingredientId: string): 'avoid' | 'watch' | undefined => {
@@ -64,7 +78,7 @@ export default function DishDetailScreen() {
     unknown: [],
   };
 
-  for (const entry of dish?.ingredients ?? []) {
+  for (const entry of analysis.ingredients ?? []) {
     const ingredient = getIngredient(entry.ingredientId);
     if (!ingredient) continue;
     grouped[entry.certainty].push({
@@ -73,6 +87,9 @@ export default function DishDetailScreen() {
       note: entry.note ?? ingredient.note,
     });
   }
+
+  const hasIngredients = Object.values(grouped).some((list) => list.length > 0);
+  const unplaced = analysis.unplacedIngredients ?? [];
 
   return (
     <ScrollView className="bg-background flex-1" contentContainerClassName="gap-5 px-5 pt-4 pb-10">
@@ -85,7 +102,7 @@ export default function DishDetailScreen() {
             </Typography>
             <Typography className="text-muted text-xs">
               {analysis.score === null
-                ? 'We do not score a dish we cannot look up.'
+                ? 'There is not enough here to put a number on.'
                 : `${analysis.score} out of 10 for your profile`}
             </Typography>
           </View>
@@ -104,14 +121,25 @@ export default function DishDetailScreen() {
         <Typography className="text-muted text-xs">On the menu as “{analysis.rawText}”</Typography>
       ) : null}
 
-      {dish ? (
-        <View className="gap-2">
-          <Typography className="text-base font-semibold">How this dish is usually made</Typography>
-          <Typography className="text-muted text-sm leading-6">{dish.summary}</Typography>
+      {analysis.menuDescription ? (
+        <View className="border-border bg-surface-secondary gap-1.5 rounded-2xl border p-4">
+          <Typography className="text-muted text-xs font-semibold tracking-wide uppercase">
+            What the menu says
+          </Typography>
+          <Typography className="text-sm leading-6">{analysis.menuDescription}</Typography>
         </View>
       ) : null}
 
-      {dish ? (
+      {source === 'library' ? (
+        <View className="gap-2">
+          <Typography className="text-base font-semibold">How this dish is usually made</Typography>
+          <Typography className="text-muted text-sm leading-6">{analysis.summary}</Typography>
+        </View>
+      ) : null}
+
+      <Typography className="text-muted text-sm leading-6">{SOURCE_NOTE[source]}</Typography>
+
+      {hasIngredients ? (
         <>
           <Separator />
           <View className="gap-4">
@@ -127,7 +155,7 @@ export default function DishDetailScreen() {
               grouped[certainty].length === 0 ? null : (
                 <View key={certainty} className="gap-2">
                   <Typography className="text-muted text-xs font-semibold tracking-wide uppercase">
-                    {SECTION_TITLES[certainty]}
+                    {titles[certainty]}
                   </Typography>
                   <Typography className="text-muted text-xs leading-5">
                     {CERTAINTY_EXPLAINER[certainty]}
@@ -146,6 +174,19 @@ export default function DishDetailScreen() {
             )}
           </View>
         </>
+      ) : null}
+
+      {unplaced.length > 0 ? (
+        <View className="border-border bg-surface-secondary gap-1.5 rounded-2xl border p-4">
+          <Typography className="text-muted text-xs font-semibold tracking-wide uppercase">
+            Also named on the menu
+          </Typography>
+          <Typography className="text-sm leading-6">{unplaced.join(', ')}</Typography>
+          <Typography className="text-muted text-xs leading-5">
+            We do not hold information on these, so they are not part of the score. Ask about them
+            if any of them matter to you.
+          </Typography>
+        </View>
       ) : null}
 
       {analysis.questions.length > 0 ? (

@@ -164,7 +164,7 @@ function RootStack() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      <Stack.Screen name="confirm-dishes" options={{ title: 'Check the dishes' }} />
+      <Stack.Screen name="reading" options={{ title: 'Reading the menu' }} />
       <Stack.Screen name="results/[scanId]" options={{ title: 'Results' }} />
       <Stack.Screen name="dish/[scanId]/[lineId]" options={{ title: 'Dish detail' }} />
       <Stack.Screen name="questions/[scanId]" options={{ title: 'Questions for staff' }} />

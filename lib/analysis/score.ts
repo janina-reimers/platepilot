@@ -93,10 +93,16 @@ export type ScoreResult = {
  *  - one confirmed hit on something the user strictly avoids drops it to 1
  *  - anything that has to be checked with staff is capped at 6
  *  - a dish with any unclear part can never reach 10
+ *  - `ceiling` caps a dish we only half know, whatever the findings say
  *  - only the worst finding per trigger counts, so one problem is not
  *    punished five times over
  */
-export function scoreDish(dish: Dish, findings: Finding[], confidence: number): ScoreResult {
+export function scoreDish(
+  dish: Dish,
+  findings: Finding[],
+  confidence: number,
+  ceiling = 10,
+): ScoreResult {
   const worstPerTrigger = new Map<string, Finding>();
   const order: Record<Certainty, number> = { confirmed: 0, possible: 1, unknown: 2 };
 
@@ -140,6 +146,7 @@ export function scoreDish(dish: Dish, findings: Finding[], confidence: number): 
   if (softAsking) score = Math.min(score, 8);
   if (needsAsking) score = Math.min(score, 6);
   if (confidence < 0.6) score = Math.min(score, 6);
+  score = Math.min(score, ceiling);
 
   score = Math.max(2, Math.min(10, Math.round(score)));
 
@@ -176,10 +183,15 @@ export function buildReasons(
   findings: Finding[],
   result: ScoreResult,
   confidence: number,
+  source: 'library' | 'menu' = 'library',
 ): string[] {
   const reasons: string[] = [];
 
-  if (confidence < 0.6) {
+  if (source === 'menu') {
+    reasons.push(
+      'We do not have a recipe for this dish, so this is based only on what the menu prints about it.',
+    );
+  } else if (confidence < 0.6) {
     reasons.push(`We matched this to our recipe for ${dish.name}. Check that it is the same dish.`);
   }
 
@@ -222,7 +234,11 @@ export function buildReasons(
   } else if (result.needsAsking) {
     reasons.push('Ask the kitchen the questions below before you decide.');
   } else if (findings.length === 0) {
-    reasons.push('Nothing in the usual recipe matches your profile.');
+    reasons.push(
+      source === 'menu'
+        ? 'Nothing the menu names is on your list, but a menu never lists everything.'
+        : 'Nothing in the usual recipe matches your profile.',
+    );
   }
 
   return reasons;

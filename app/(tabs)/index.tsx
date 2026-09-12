@@ -20,7 +20,8 @@ export default function HomeScreen() {
       <View className="gap-2">
         <Typography type="h2">Where are you eating?</Typography>
         <Typography className="text-muted text-sm leading-6">
-          Photograph the menu and PlatePilot will work through the usual recipe behind each dish.
+          Photograph the menu and PlatePilot reads it for you, then scores each dish against your
+          profile.
         </Typography>
       </View>
 
@@ -30,8 +31,8 @@ export default function HomeScreen() {
         </View>
         <Typography className="text-base font-semibold">Scan a menu</Typography>
         <Typography className="text-muted text-sm leading-6">
-          Take a photo or pick one from your library, then check the dish names before we score
-          them.
+          Take a photo or pick one from your library. We read the page and go straight to the dishes
+          that look like the closest match.
         </Typography>
         <Button size="lg" onPress={() => router.push('/(tabs)/scan')}>
           Start a scan
@@ -95,8 +96,8 @@ export default function HomeScreen() {
         <View className="border-border bg-surface flex-row items-start gap-3 rounded-3xl border p-5">
           <Utensils color={muted} size={18} />
           <Typography className="text-muted flex-1 text-sm leading-6">
-            Your scans stay on this phone. Nothing about your profile or the menus you check is sent
-            anywhere.
+            Your profile and your scans stay on this phone. The menu photo goes out only to have its
+            text read, and is not stored.
           </Typography>
         </View>
       )}
