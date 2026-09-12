@@ -286,6 +286,7 @@ function StrictnessPicker({
   value: Strictness;
   onChange: (value: Strictness) => void;
 }) {
+  const [accentForeground, muted] = useThemeColor(['accent-foreground', 'muted']);
   const options: { value: Strictness; label: string }[] = [
     { value: 'strict', label: 'Avoid completely' },
     { value: 'small-amounts', label: 'Small amounts are fine' },
@@ -305,10 +306,8 @@ function StrictnessPicker({
           )}
         >
           <Typography
-            className={cn(
-              'text-[11px] font-semibold',
-              value === option.value ? 'text-accent-foreground' : 'text-muted',
-            )}
+            className="text-[11px] font-semibold"
+            style={{ color: value === option.value ? accentForeground : muted }}
           >
             {option.label}
           </Typography>
