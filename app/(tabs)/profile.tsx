@@ -264,7 +264,7 @@ export default function ProfileScreen() {
 
         <Separator />
 
-        <Button variant="danger-soft" size="md" onPress={reset}>
+        <Button variant="secondary" size="md" onPress={reset}>
           Clear this profile
         </Button>
         {profiles.length > 1 ? (

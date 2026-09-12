@@ -131,7 +131,7 @@ export default function ScanScreen() {
                   accessibilityLabel={`Menu page ${index + 1}`}
                 />
                 <Button
-                  variant="danger-soft"
+                  variant="secondary"
                   size="sm"
                   isIconOnly
                   className="absolute top-1 right-1 h-7 w-7"
@@ -140,7 +140,7 @@ export default function ScanScreen() {
                     setDraftPhotos(draftPhotos.filter((_, itemIndex) => itemIndex !== index))
                   }
                 >
-                  <Trash2 color={BAND_HEX.avoid} size={13} />
+                  <Trash2 color={accent} size={13} />
                 </Button>
               </View>
             ))}

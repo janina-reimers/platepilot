@@ -40,14 +40,15 @@
 @source './node_modules/heroui-native/lib';
 
 /*
- * PlatePilot brand: calm, clinical, trustworthy. Deep teal accent so that the
- * red/amber/green score scale stays the only strongly saturated signal in the UI.
+ * PlatePilot brand: Deep Navy matches the word “Plate” in the logo. Keeping
+ * action colors in this navy family leaves red/amber/green exclusively for
+ * food-match status signals.
  */
 @layer theme {
   :root {
     @variant light {
-      --accent: oklch(0.52 0.083 193);
-      --accent-foreground: oklch(0.99 0 0);
+      --accent: oklch(0.295 0.056 239);
+      --accent-foreground: oklch(1 0 0);
       --focus: var(--accent);
       --success: oklch(0.56 0.13 152);
       --warning: oklch(0.68 0.14 68);
@@ -55,8 +56,8 @@
     }
 
     @variant dark {
-      --accent: oklch(0.7 0.09 193);
-      --accent-foreground: oklch(0.17 0.02 193);
+      --accent: oklch(0.295 0.056 239);
+      --accent-foreground: oklch(1 0 0);
       --focus: var(--accent);
       --success: oklch(0.7 0.13 152);
       --warning: oklch(0.79 0.14 68);
@@ -87,7 +88,7 @@
   --color-score-unknown-soft: oklch(0.958 0.005 240);
   --color-score-unknown-line: oklch(0.87 0.008 240);
 
-  --color-ink: oklch(0.26 0.03 200);
+  --color-ink: oklch(0.295 0.056 239);
 
   --color-profile-teal: oklch(0.52 0.083 193);
   --color-profile-blue: oklch(0.55 0.13 245);
