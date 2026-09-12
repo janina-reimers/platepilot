@@ -15,8 +15,7 @@ export const MEDITERRANEAN_DISHES: Dish[] = [
     name: 'Moussaka',
     aliases: ['mousaka', 'aubergine bake'],
     cuisine: 'Greek',
-    summary:
-      'Layers of aubergine and spiced lamb under a thick milk sauce, baked until browned.',
+    summary: 'Layers of aubergine and spiced lamb under a thick milk sauce, baked until browned.',
     ingredients: [
       c('aubergine'),
       c('cream-sauce', 'The top layer is a béchamel of milk, butter and flour.'),
@@ -164,7 +163,14 @@ export const MEDITERRANEAN_DISHES: Dish[] = [
     aliases: ['sardines', 'sardinas', 'grilled sardine'],
     cuisine: 'Mediterranean',
     summary: 'Whole small oily fish grilled with salt, oil and lemon.',
-    ingredients: [c('sardine'), c('olive-oil'), c('salt'), p('lemon'), p('fresh-herbs'), p('garlic')],
+    ingredients: [
+      c('sardine'),
+      c('olive-oil'),
+      c('salt'),
+      p('lemon'),
+      p('fresh-herbs'),
+      p('garlic'),
+    ],
   },
   {
     id: 'avgolemono',

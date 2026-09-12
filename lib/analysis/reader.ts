@@ -26,7 +26,12 @@ const INGREDIENT_OPTIONS = INGREDIENT_LIST.filter((item) => !item.isUnknownEleme
   ({ id, name }) => ({ id, name }),
 );
 
-/** The recipes the reader may recognise a printed dish as. */
+/**
+ * The recipes the reader may recognise a printed dish as.
+ *
+ * The `read-menu` function keeps only the first 250 of these, so raise the limit
+ * there before the library grows past that.
+ */
 const DISH_OPTIONS = DISHES.map(({ id, name, aliases }) => ({
   id,
   name,

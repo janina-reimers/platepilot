@@ -369,7 +369,8 @@ export const LATIN_AMERICAN_DISHES: Dish[] = [
     name: 'Lomo saltado',
     aliases: ['lomo saltado', 'peruvian beef stir fry'],
     cuisine: 'Peruvian',
-    summary: 'Beef stir fried with onion and tomato in soy and vinegar, served with chips and rice.',
+    summary:
+      'Beef stir fried with onion and tomato in soy and vinegar, served with chips and rice.',
     ingredients: [
       c('beef'),
       c('onion'),
