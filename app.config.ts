@@ -14,6 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: 'platepilot',
     version: process.env.BILT_APP_VERSION ?? '1.0.0',
     orientation: 'portrait',
+    icon: './assets/PlatePilot_Logo.png',
     userInterfaceStyle: 'automatic',
     scheme: 'platepilot',
     runtimeVersion: {

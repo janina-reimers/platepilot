@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Plus, ShieldCheck, X } from 'lucide-react-native';
+import { ArrowLeft, Plus, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Button, Input, Separator, Typography, useThemeColor } from 'heroui-native';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Disclaimer } from '@/components/Disclaimer';
 import { SelectableRow } from '@/components/SelectableRow';
 import { matchCustomAvoidText } from '@/lib/analysis/profile';
@@ -96,8 +97,8 @@ export default function OnboardingScreen() {
         >
           {step === 0 ? (
             <View className="gap-4">
-              <View className="bg-accent-soft h-12 w-12 items-center justify-center rounded-2xl">
-                <ShieldCheck color={accent} size={24} />
+              <View className="items-center">
+                <BrandLogo size={184} />
               </View>
               <Typography type="h2">Eating out, with fewer guesses</Typography>
               <Typography className="text-muted text-base leading-7">
