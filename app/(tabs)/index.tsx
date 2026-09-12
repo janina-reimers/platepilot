@@ -27,8 +27,8 @@ export default function HomeScreen() {
           What&apos;s on the menu today?
         </Typography>
         <Typography className="text-muted text-sm leading-6">
-          Snap or upload a picture of the menu. PlatePilot analyzes it for you and scores each dish
-          against your profile.
+          Simply scan the menu. PlatePilot analyzes it for you and scores each dish against your
+          profile.
         </Typography>
       </View>
 
