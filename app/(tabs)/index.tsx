@@ -33,10 +33,12 @@ export default function HomeScreen() {
       </View>
 
       <View className="border-border bg-surface gap-3 rounded-3xl border p-5">
-        <View className="bg-accent-soft h-11 w-11 items-center justify-center rounded-2xl">
-          <Camera color={accent} size={22} />
+        <View className="flex-row items-center gap-3">
+          <View className="bg-accent-soft h-11 w-11 items-center justify-center rounded-2xl">
+            <Camera color={accent} size={22} />
+          </View>
+          <Typography className="text-base font-bold">Scan a menu</Typography>
         </View>
-        <Typography className="text-base font-semibold">Scan a menu</Typography>
         <Typography className="text-muted text-sm leading-6">
           Take a photo or pick one from your library. We read the page and go straight to the dishes
           that look like the closest match.
