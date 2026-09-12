@@ -13,7 +13,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { useEffect } from 'react';
 import * as DevClient from 'expo-dev-client';
-import { HeroUINativeProvider } from 'heroui-native';
+import { HeroUINativeProvider, useThemeColor } from 'heroui-native';
 import { Uniwind } from 'uniwind';
 import {
   ErrorBoundary as ExpoErrorBoundary,
@@ -141,11 +141,37 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ title: 'Habits', headerShown: false }} />
-        </Stack>
+        <RootStack />
         <InstallPrompt />
       </HeroUINativeProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function RootStack() {
+  const [background, foreground] = useThemeColor(['background', 'foreground']);
+
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: background },
+        headerTintColor: foreground,
+        headerTitleStyle: { color: foreground },
+        headerShadowVisible: false,
+        headerBackTitle: 'Back',
+        contentStyle: { backgroundColor: background },
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="confirm-dishes" options={{ title: 'Check the dishes' }} />
+      <Stack.Screen name="results/[scanId]" options={{ title: 'Results' }} />
+      <Stack.Screen name="dish/[scanId]/[lineId]" options={{ title: 'Dish detail' }} />
+      <Stack.Screen name="questions/[scanId]" options={{ title: 'Questions for staff' }} />
+      <Stack.Screen
+        name="about"
+        options={{ title: 'How PlatePilot works', presentation: 'modal' }}
+      />
+    </Stack>
   );
 }
