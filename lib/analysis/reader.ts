@@ -28,6 +28,31 @@ const NAME_TOKENS: { id: string; tokens: string[] }[] = INGREDIENT_OPTIONS.map((
 
 export type MenuReadFailure = 'unreadable' | 'service' | 'photo';
 
+/** Reasons the cloud reader reports back instead of a transcription. */
+type CloudFailure = 'not_configured' | 'quota' | 'upstream' | 'unreadable';
+
+const FAILURE_MESSAGE: Record<CloudFailure, { kind: MenuReadFailure; message: string }> = {
+  not_configured: {
+    kind: 'service',
+    message:
+      'Menu reading is not switched on yet, so there is nothing to read the photo with. Nobody has been charged and your photo was not kept.',
+  },
+  quota: {
+    kind: 'service',
+    message:
+      'Menu reading has run out of credit on its account, so this photo could not be read. It will work again once that is topped up.',
+  },
+  upstream: {
+    kind: 'service',
+    message: 'Menu reading did not answer just now. Try the same photo again in a moment.',
+  },
+  unreadable: {
+    kind: 'unreadable',
+    message:
+      'We could not make out any dishes on that photo. A straight, well-lit shot of one page works best.',
+  },
+};
+
 /** A failure we can explain to the user in one sentence. */
 export class MenuReadError extends Error {
   readonly kind: MenuReadFailure;
@@ -67,6 +92,7 @@ type CloudReadResponse = {
   place: string | null;
   items: CloudMenuItem[];
   truncated?: boolean;
+  failure?: CloudFailure;
 };
 
 /** Match a word the menu used against the ingredient catalogue, whole words only. */
@@ -148,15 +174,18 @@ export async function readMenuPhoto(
   if (error || !data) {
     throw new MenuReadError(
       'service',
-      'We could not read the menu just now. Check your connection and try again.',
+      'We could not reach the menu reader. Check your connection and try again.',
     );
   }
 
+  if (data.failure) {
+    const known = FAILURE_MESSAGE[data.failure];
+    if (known) throw new MenuReadError(known.kind, known.message);
+    throw new MenuReadError('service', FAILURE_MESSAGE.upstream.message);
+  }
+
   if (!data.readable || data.items.length === 0) {
-    throw new MenuReadError(
-      'unreadable',
-      'We could not make out any dishes on that photo. A straight, well-lit shot of one page works best.',
-    );
+    throw new MenuReadError('unreadable', FAILURE_MESSAGE.unreadable.message);
   }
 
   return {
