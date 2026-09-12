@@ -7,18 +7,22 @@ type BrandLogoProps = {
 };
 
 export function BrandLogo({ size = 168 }: BrandLogoProps) {
-  const imageSize = size - 4;
+  const logoAspectRatio = 1434 / 1011;
+  const frameHeight = size / logoAspectRatio;
+  const inset = 4;
+  const imageWidth = size - inset * 2;
+  const imageHeight = imageWidth / logoAspectRatio;
 
   return (
     <View
-      className="border-ink items-center justify-center overflow-hidden rounded-3xl border-2"
-      style={{ width: size, height: size }}
+      className="border-ink items-center justify-center overflow-hidden rounded-3xl"
+      style={{ width: size, height: frameHeight, borderWidth: 3 }}
     >
       <Image
         accessibilityLabel="PlatePilot"
         source={platePilotLogo}
         contentFit="contain"
-        style={{ width: imageSize, height: imageSize }}
+        style={{ width: imageWidth, height: imageHeight }}
       />
     </View>
   );
