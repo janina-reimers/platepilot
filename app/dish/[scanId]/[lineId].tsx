@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { FileQuestion } from 'lucide-react-native';
+import { FileQuestion, Heart, Wrench } from 'lucide-react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { Separator, Typography } from 'heroui-native';
+import { Button, Separator, Typography, useThemeColor } from 'heroui-native';
 import { ScrollView, View } from 'react-native';
 import { CERTAINTY_EXPLAINER } from '@/components/CertaintyChip';
 import { Disclaimer } from '@/components/Disclaimer';
@@ -9,24 +9,25 @@ import { EmptyState } from '@/components/EmptyState';
 import { IngredientRow } from '@/components/IngredientRow';
 import { QuestionList } from '@/components/QuestionList';
 import { ScoreBadge } from '@/components/ScoreBadge';
+import { confidenceLabel } from '@/lib/analysis/score';
 import type { DishSource } from '@/lib/analysis/types';
 import { BAND_STYLES } from '@/lib/bands';
 import { getIngredient } from '@/lib/data/ingredients';
 import type { Certainty } from '@/lib/data/types';
 import { goBackOrReplace } from '@/lib/navigation';
-import { useScan } from '@/lib/store/scans';
+import { useScan, useScanStore } from '@/lib/store/scans';
 import { cn } from '@/lib/utils';
 
 const SECTION_TITLES: Record<Certainty, string> = {
-  confirmed: 'In this dish',
-  possible: 'Often in this dish',
-  unknown: 'Only the kitchen can say',
+  confirmed: '✓ Confirmed ingredients',
+  possible: '? Possible or likely ingredients',
+  unknown: '⚠ Unknown information',
 };
 
 const MENU_SECTION_TITLES: Record<Certainty, string> = {
-  confirmed: 'Printed on the menu',
-  possible: 'Often in a dish like this',
-  unknown: 'Only the kitchen can say',
+  confirmed: '✓ Confirmed on the menu',
+  possible: '? Possible or likely ingredients',
+  unknown: '⚠ Unknown information',
 };
 
 const SOURCE_NOTE: Record<DishSource, string> = {
@@ -40,8 +41,12 @@ export default function DishDetailScreen() {
   const { scanId, lineId } = useLocalSearchParams<{ scanId: string; lineId: string }>();
   const scan = useScan(scanId);
   const navigation = useNavigation();
+  const [foreground] = useThemeColor(['foreground']);
+  const favorites = useScanStore((state) => state.favorites);
+  const toggleFavorite = useScanStore((state) => state.toggleFavorite);
 
   const analysis = scan?.analysis.dishes.find((item) => item.lineId === lineId);
+  const isFavorite = favorites.some((item) => item.scanId === scanId && item.lineId === lineId);
 
   useEffect(() => {
     if (analysis) navigation.setOptions({ title: analysis.dishName });
@@ -64,6 +69,7 @@ export default function DishDetailScreen() {
   const source: DishSource = analysis.source ?? (analysis.dishId ? 'library' : 'none');
   const titles = source === 'menu' ? MENU_SECTION_TITLES : SECTION_TITLES;
   const style = BAND_STYLES[analysis.band];
+  const confidence = confidenceLabel(analysis.confidence, source);
 
   const isFlagged = (ingredientId: string): boolean =>
     analysis.findings.some((finding) => finding.ingredientId === ingredientId);
@@ -101,10 +107,16 @@ export default function DishDetailScreen() {
                 ? 'There is not enough here to put a number on.'
                 : `${analysis.score} out of 10 for your profile`}
             </Typography>
+            <Typography className="text-muted text-xs font-medium">
+              Confidence: {confidence}
+            </Typography>
           </View>
         </View>
 
         <View className="gap-2">
+          <Typography className="text-xs font-semibold tracking-wide uppercase">
+            Why this score?
+          </Typography>
           {analysis.reasons.map((reason) => (
             <Typography key={reason} className="text-sm leading-6">
               {reason}
@@ -134,6 +146,40 @@ export default function DishDetailScreen() {
       ) : null}
 
       <Typography className="text-muted text-sm leading-6">{SOURCE_NOTE[source]}</Typography>
+
+      {(analysis.modifications?.length ?? 0) > 0 ? (
+        <>
+          <Separator />
+          <View className="gap-3">
+            <View className="flex-row items-center gap-2">
+              <Wrench color={foreground} size={18} />
+              <Typography className="text-base font-semibold">Can I modify this?</Typography>
+            </View>
+            <Typography className="text-muted text-sm leading-6">
+              These are requests, not confirmed options. The kitchen must confirm the change and the
+              ingredients used.
+            </Typography>
+            {analysis.modifications?.map((modification) => (
+              <View
+                key={modification.label}
+                className="border-border bg-surface gap-2 rounded-2xl border p-4"
+              >
+                <Typography className="font-semibold">{modification.label}</Typography>
+                <Typography className="text-sm leading-6">{modification.request}</Typography>
+                <Typography className="text-muted text-xs leading-5">
+                  {modification.reason}
+                </Typography>
+                {modification.potentialScore ? (
+                  <Typography className="text-score-good text-sm font-semibold">
+                    Potential match if the kitchen confirms this exact change:{' '}
+                    {modification.potentialScore}/10
+                  </Typography>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
 
       {hasIngredients ? (
         <>
@@ -197,14 +243,34 @@ export default function DishDetailScreen() {
         </>
       ) : null}
 
-      <Typography
-        className="text-accent text-sm font-medium"
-        onPress={() =>
-          router.push({ pathname: '/questions/[scanId]', params: { scanId: scan.id } })
-        }
-      >
-        See all questions for this menu
-      </Typography>
+      <View className="gap-2">
+        <Button
+          variant={isFavorite ? 'tertiary' : 'secondary'}
+          onPress={() => toggleFavorite(scan.id, analysis.lineId)}
+        >
+          <Heart color={foreground} size={17} fill={isFavorite ? foreground : 'transparent'} />
+          <Button.Label>{isFavorite ? 'Remove from favorites' : 'Save favorite dish'}</Button.Label>
+        </Button>
+        <Button
+          variant="secondary"
+          onPress={() =>
+            router.push({
+              pathname: '/waiter/[scanId]',
+              params: { scanId: scan.id, lineId: analysis.lineId },
+            })
+          }
+        >
+          <Button.Label>Show this dish to waiter</Button.Label>
+        </Button>
+        <Button
+          variant="ghost"
+          onPress={() =>
+            router.push({ pathname: '/questions/[scanId]', params: { scanId: scan.id } })
+          }
+        >
+          <Button.Label>See all questions for this menu</Button.Label>
+        </Button>
+      </View>
 
       <Disclaimer />
     </ScrollView>

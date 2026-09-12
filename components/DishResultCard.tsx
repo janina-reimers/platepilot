@@ -1,6 +1,7 @@
 import { ChevronRight, Star } from 'lucide-react-native';
 import { Surface, Typography, useThemeColor } from 'heroui-native';
 import { Pressable, View } from 'react-native';
+import { confidenceLabel } from '@/lib/analysis/score';
 import type { DishAnalysis } from '@/lib/analysis/types';
 import { BAND_HEX, BAND_STYLES } from '@/lib/bands';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,10 @@ type DishResultCardProps = {
 export function DishResultCard({ analysis, onPress }: DishResultCardProps) {
   const [muted] = useThemeColor(['muted']);
   const style = BAND_STYLES[analysis.band];
+  const confidence = confidenceLabel(
+    analysis.confidence,
+    analysis.source ?? (analysis.dishId ? 'library' : 'none'),
+  );
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button">
@@ -29,7 +34,7 @@ export function DishResultCard({ analysis, onPress }: DishResultCardProps) {
           <View className="bg-score-good-soft flex-row items-center gap-1.5 self-start rounded-full px-2.5 py-1">
             <Star color={BAND_HEX.good} size={12} />
             <Typography className="text-score-good text-[11px] font-semibold">
-              Best match on this menu
+              Best Match for You
             </Typography>
           </View>
         ) : null}
@@ -42,7 +47,7 @@ export function DishResultCard({ analysis, onPress }: DishResultCardProps) {
               {analysis.dishName}
             </Typography>
             <Typography className={cn('text-xs font-medium', style.text)}>
-              {analysis.headline}
+              {analysis.headline} · Confidence: {confidence}
             </Typography>
           </View>
 
@@ -61,13 +66,18 @@ export function DishResultCard({ analysis, onPress }: DishResultCardProps) {
           </Typography>
         ) : null}
 
-        {analysis.questions.length > 0 ? (
-          <Typography className="text-score-ask text-xs font-medium">
-            {analysis.questions.length === 1
-              ? '1 question to ask staff'
-              : `${analysis.questions.length} questions to ask staff`}
-          </Typography>
-        ) : null}
+        <View className="flex-row items-center justify-between gap-3">
+          {analysis.questions.length > 0 ? (
+            <Typography className="text-score-ask flex-1 text-xs font-medium">
+              {analysis.questions.length === 1
+                ? '1 question to ask staff'
+                : `${analysis.questions.length} questions to ask staff`}
+            </Typography>
+          ) : (
+            <View className="flex-1" />
+          )}
+          <Typography className="text-accent text-xs font-semibold">Why this score?</Typography>
+        </View>
       </Surface>
     </Pressable>
   );

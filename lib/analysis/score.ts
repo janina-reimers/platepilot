@@ -146,20 +146,33 @@ export function bandFor(score: number | null): ScoreBand {
 }
 
 export const BAND_HEADLINE: Record<ScoreBand, string> = {
-  avoid: 'Not recommended for you',
-  ask: 'Ask before you order',
-  good: 'Looks like a reasonable choice',
-  strong: 'Looks like a good match',
-  unknown: 'Not enough information',
+  avoid: 'Not for You',
+  ask: 'Check First',
+  good: 'Good Match',
+  strong: 'Good Match',
+  unknown: 'Check First',
 };
 
 export const BAND_SHORT: Record<ScoreBand, string> = {
-  avoid: 'Avoid',
-  ask: 'Ask first',
-  good: 'Reasonable',
-  strong: 'Good match',
-  unknown: 'Unclear',
+  avoid: 'Not for You',
+  ask: 'Check First',
+  good: 'Good Match',
+  strong: 'Good Match',
+  unknown: 'Check First',
 };
+
+export type ConfidenceLabel = 'High' | 'Medium' | 'Low';
+
+/** A plain-language label for how confidently a menu line was tied to ingredient evidence. */
+export function confidenceLabel(
+  confidence: number,
+  source: 'library' | 'menu' | 'none',
+): ConfidenceLabel {
+  if (source === 'none' || source === 'menu') return 'Low';
+  if (confidence >= 0.8) return 'High';
+  if (confidence >= 0.6) return 'Medium';
+  return 'Low';
+}
 
 /** Plain sentences explaining the score, in the order a person would read them. */
 export function buildReasons(

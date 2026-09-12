@@ -69,8 +69,8 @@ export default function ResultsScreen() {
               <Star color={BAND_HEX.good} size={18} />
               <Typography className="text-score-good flex-1 text-sm leading-6">
                 {bestMatchLineIds.length === 1
-                  ? 'One dish stands out as the best fit for your profile. It is marked below.'
-                  : `${bestMatchLineIds.length} dishes stand out as the best fit for your profile. They are marked below.`}
+                  ? 'Best Match for You is marked below.'
+                  : `Your Top ${bestMatchLineIds.length} Best Matches are marked below.`}
               </Typography>
             </View>
           ) : (

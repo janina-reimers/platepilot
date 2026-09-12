@@ -2,12 +2,14 @@ import { DISHES_BY_ID } from '@/lib/data/dishes';
 import { getIngredient } from '@/lib/data/ingredients';
 import type { Dish, DishIngredient } from '@/lib/data/types';
 import { type DishMatch, matchDishAny } from './match';
+import { buildDishModifications } from './modifications';
 import { describeProfile, normalise, resolveTriggers } from './profile';
 import { buildDishQuestions, buildGeneralQuestions, unknownDishQuestions } from './questions';
 import { BAND_HEADLINE, buildReasons, findTriggerHits, scoreDish } from './score';
 import type { DishAnalysis, MenuAnalysis, MenuLine, Profile } from './types';
 
 export * from './match';
+export * from './modifications';
 export * from './profile';
 export * from './questions';
 export * from './reader';
@@ -184,6 +186,7 @@ export function analyseLine(line: MenuLine, profile: Profile): DishAnalysis {
       reasons,
       findings,
       questions: buildDishQuestions(dish, findings),
+      modifications: buildDishModifications(dish, findings, confidence, result.score),
     };
   }
 
@@ -207,6 +210,7 @@ export function analyseLine(line: MenuLine, profile: Profile): DishAnalysis {
       reasons: buildReasons(dish, findings, result, 1, 'menu'),
       findings,
       questions: buildDishQuestions(dish, findings),
+      modifications: buildDishModifications(dish, findings, 1, result.score, MENU_TEXT_CEILING),
     };
   }
 
@@ -236,10 +240,9 @@ export function analyseMenu(lines: MenuLine[], profile: Profile): MenuAnalysis {
   const triggers = resolveTriggers(profile);
   const dishes = lines.map((line) => analyseLine(line, profile));
 
-  const scored = dishes.filter((item) => item.score !== null && item.score >= 7);
-  const topScore = scored.reduce((max, item) => Math.max(max, item.score ?? 0), 0);
-  const bestMatchLineIds = scored
-    .filter((item) => item.score === topScore)
+  const bestMatchLineIds = dishes
+    .filter((item) => item.score !== null && item.score >= 7)
+    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || b.confidence - a.confidence)
     .slice(0, 3)
     .map((item) => item.lineId);
 

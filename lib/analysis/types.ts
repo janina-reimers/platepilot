@@ -16,7 +16,13 @@ export type CustomAvoid = {
   matchedIngredientIds: string[];
 };
 
+export type ProfileColor = 'teal' | 'blue' | 'violet' | 'orange' | 'rose' | 'green';
+
 export type Profile = {
+  id: string;
+  /** Optional user label. The UI falls back to Profile 1, Profile 2, and so on. */
+  name: string;
+  color: ProfileColor;
   intolerances: ProfileIntolerance[];
   customAvoids: CustomAvoid[];
   /** Set once the user has been through onboarding. */
@@ -24,6 +30,9 @@ export type Profile = {
 };
 
 export const EMPTY_PROFILE: Profile = {
+  id: 'profile-default',
+  name: '',
+  color: 'teal',
   intolerances: [],
   customAvoids: [],
   onboarded: false,
@@ -91,6 +100,14 @@ export type ScoreBand = 'avoid' | 'ask' | 'good' | 'strong' | 'unknown';
  */
 export type DishSource = 'library' | 'menu' | 'none';
 
+export type DishModification = {
+  label: string;
+  request: string;
+  reason: string;
+  /** Hypothetical score only if staff confirm this exact change. */
+  potentialScore: number | null;
+};
+
 export type DishAnalysis = {
   lineId: string;
   rawText: string;
@@ -113,6 +130,7 @@ export type DishAnalysis = {
   reasons: string[];
   findings: Finding[];
   questions: string[];
+  modifications?: DishModification[];
   isBestMatch: boolean;
 };
 

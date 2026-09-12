@@ -1,18 +1,20 @@
 import { formatDistanceToNow } from 'date-fns';
-import { ChevronRight, ClipboardList, Trash2 } from 'lucide-react-native';
+import { ChevronRight, ClipboardList, Heart, Trash2 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Typography, useThemeColor } from 'heroui-native';
 import { FlatList, Pressable, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { ScoreBadge } from '@/components/ScoreBadge';
-import { useScanStore, useScans } from '@/lib/store/scans';
+import { useFavorites, useScanStore, useScans } from '@/lib/store/scans';
 
 export default function HistoryScreen() {
   const scans = useScans();
+  const favorites = useFavorites();
   const removeScan = useScanStore((state) => state.removeScan);
+  const toggleFavorite = useScanStore((state) => state.toggleFavorite);
   const [muted] = useThemeColor(['muted']);
 
-  if (scans.length === 0) {
+  if (scans.length === 0 && favorites.length === 0) {
     return (
       <View className="bg-background flex-1 justify-center">
         <EmptyState
@@ -33,9 +35,59 @@ export default function HistoryScreen() {
       keyExtractor={(item) => item.id}
       contentContainerClassName="gap-2 px-5 pt-3 pb-10"
       ListHeaderComponent={
-        <Typography className="text-muted pb-2 text-sm leading-6">
-          Saved on this phone only. Scores reflect the profile you had at the time.
-        </Typography>
+        <View className="gap-3 pb-3">
+          <Typography className="text-muted text-sm leading-6">
+            Saved on this phone only. Scores reflect the profile used at the time.
+          </Typography>
+          {favorites.length > 0 ? (
+            <View className="gap-2">
+              <View className="flex-row items-center gap-2">
+                <Heart color={muted} size={16} />
+                <Typography className="text-base font-semibold">Favorite dishes</Typography>
+              </View>
+              {favorites.map((favorite) => {
+                const sourceStillSaved = scans.some((scan) => scan.id === favorite.scanId);
+                return (
+                  <View
+                    key={favorite.id}
+                    className="border-border bg-surface flex-row items-center gap-3 rounded-2xl border p-4"
+                  >
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/favorite/[favoriteId]',
+                          params: { favoriteId: favorite.id },
+                        })
+                      }
+                      className="flex-1 flex-row items-center gap-3"
+                    >
+                      <ScoreBadge score={favorite.dish.score} band={favorite.dish.band} size="sm" />
+                      <View className="flex-1 gap-0.5">
+                        <Typography className="text-sm font-semibold" numberOfLines={1}>
+                          {favorite.dish.dishName}
+                        </Typography>
+                        <Typography className="text-muted text-xs" numberOfLines={1}>
+                          {favorite.place}
+                          {sourceStillSaved ? '' : ' · saved snapshot'}
+                        </Typography>
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${favorite.dish.dishName} from favorites`}
+                      onPress={() => toggleFavorite(favorite.scanId, favorite.lineId)}
+                      className="bg-surface-secondary h-9 w-9 items-center justify-center rounded-full"
+                    >
+                      <Trash2 color={muted} size={15} />
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
+          <Typography className="pt-2 text-base font-semibold">Previous menu scans</Typography>
+        </View>
       }
       renderItem={({ item }) => {
         const best = item.analysis.dishes[0];

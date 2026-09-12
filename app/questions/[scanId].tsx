@@ -1,6 +1,6 @@
 import { FileQuestion } from 'lucide-react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { Separator, Typography } from 'heroui-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Button, Separator, Typography } from 'heroui-native';
 import { ScrollView, View } from 'react-native';
 import { Disclaimer } from '@/components/Disclaimer';
 import { EmptyState } from '@/components/EmptyState';
@@ -57,6 +57,13 @@ export default function QuestionsScreen() {
           Nothing needs checking for this menu.
         </Typography>
       ) : null}
+
+      <Button
+        variant="secondary"
+        onPress={() => router.push({ pathname: '/waiter/[scanId]', params: { scanId: scan.id } })}
+      >
+        <Button.Label>Show to waiter or translate</Button.Label>
+      </Button>
 
       <Disclaimer text="Answers from staff are the reliable part here, not our guess at the recipe. If nobody can tell you, treat that as a reason to pick something else." />
     </ScrollView>

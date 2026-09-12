@@ -7,16 +7,19 @@ export type CapturedPhoto = {
 };
 
 export type CaptureOutcome = {
-  photo?: CapturedPhoto;
+  photos?: CapturedPhoto[];
   /** A sentence to show the user. Absent when they simply backed out. */
   error?: string;
 };
 
 function fromResult(result: ImagePicker.ImagePickerResult): CaptureOutcome {
   if (result.canceled) return {};
-  const asset = result.assets[0];
-  if (!asset) return {};
-  return { photo: { uri: asset.uri, width: asset.width, height: asset.height } };
+  const photos = result.assets.map((asset) => ({
+    uri: asset.uri,
+    width: asset.width,
+    height: asset.height,
+  }));
+  return photos.length > 0 ? { photos } : {};
 }
 
 /** Open the camera for a menu photo. */
@@ -39,7 +42,12 @@ export async function takeMenuPhoto(): Promise<CaptureOutcome> {
 export async function pickMenuPhoto(): Promise<CaptureOutcome> {
   try {
     return fromResult(
-      await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 }),
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsMultipleSelection: true,
+        selectionLimit: 6,
+      }),
     );
   } catch {
     return { error: 'That picture could not be opened. Try another one.' };

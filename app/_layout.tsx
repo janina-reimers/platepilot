@@ -168,6 +168,9 @@ function RootStack() {
       <Stack.Screen name="results/[scanId]" options={{ title: 'Results' }} />
       <Stack.Screen name="dish/[scanId]/[lineId]" options={{ title: 'Dish detail' }} />
       <Stack.Screen name="questions/[scanId]" options={{ title: 'Questions for staff' }} />
+      <Stack.Screen name="waiter/[scanId]" options={{ title: 'Show to waiter' }} />
+      <Stack.Screen name="dining-together" options={{ title: 'Dining Together' }} />
+      <Stack.Screen name="favorite/[favoriteId]" options={{ title: 'Favorite dish' }} />
       <Stack.Screen
         name="about"
         options={{ title: 'How PlatePilot works', presentation: 'modal' }}

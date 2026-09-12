@@ -1,15 +1,24 @@
 import { useMemo, useState } from 'react';
-import { CircleHelp, Plus, X } from 'lucide-react-native';
+import { CircleHelp, Plus, UserPlus, Users, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Button, Input, Separator, Typography, useThemeColor } from 'heroui-native';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Disclaimer } from '@/components/Disclaimer';
 import { SelectableRow } from '@/components/SelectableRow';
 import { describeProfile, matchCustomAvoidText } from '@/lib/analysis/profile';
-import type { Strictness } from '@/lib/analysis/types';
+import type { ProfileColor, Strictness } from '@/lib/analysis/types';
 import { INTOLERANCES } from '@/lib/data/triggers';
-import { hasProfileContent, useProfileStore } from '@/lib/store/profile';
+import { hasProfileContent, profileDisplayName, useProfileStore } from '@/lib/store/profile';
 import { cn } from '@/lib/utils';
+
+const PROFILE_COLORS: { value: ProfileColor; className: string }[] = [
+  { value: 'teal', className: 'bg-profile-teal' },
+  { value: 'blue', className: 'bg-profile-blue' },
+  { value: 'violet', className: 'bg-profile-violet' },
+  { value: 'orange', className: 'bg-profile-orange' },
+  { value: 'rose', className: 'bg-profile-rose' },
+  { value: 'green', className: 'bg-profile-green' },
+];
 
 const CATEGORY_TITLES: Record<string, string> = {
   common: 'The most common ones',
@@ -19,6 +28,11 @@ const CATEGORY_TITLES: Record<string, string> = {
 
 export default function ProfileScreen() {
   const profile = useProfileStore((state) => state.profile);
+  const profiles = useProfileStore((state) => state.profiles);
+  const setActiveProfile = useProfileStore((state) => state.setActiveProfile);
+  const createProfile = useProfileStore((state) => state.createProfile);
+  const updateProfileMeta = useProfileStore((state) => state.updateProfileMeta);
+  const removeActiveProfile = useProfileStore((state) => state.removeActiveProfile);
   const toggleIntolerance = useProfileStore((state) => state.toggleIntolerance);
   const setStrictness = useProfileStore((state) => state.setStrictness);
   const addCustomAvoid = useProfileStore((state) => state.addCustomAvoid);
@@ -57,6 +71,86 @@ export default function ProfileScreen() {
         contentContainerClassName="gap-5 px-5 pt-3 pb-10"
         keyboardShouldPersistTaps="handled"
       >
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="flex-1 gap-1">
+              <Typography type="h4">Food Profiles</Typography>
+              <Typography className="text-muted text-sm leading-6">
+                Switch who PlatePilot checks the next menu for.
+              </Typography>
+            </View>
+            <Button variant="secondary" size="sm" onPress={createProfile}>
+              <UserPlus color={accent} size={16} />
+              <Button.Label>Add</Button.Label>
+            </Button>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="gap-2"
+          >
+            {profiles.map((item, index) => {
+              const color = PROFILE_COLORS.find((option) => option.value === item.color);
+              const active = item.id === profile.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => setActiveProfile(item.id)}
+                  className={cn(
+                    'border-border bg-surface flex-row items-center gap-2 rounded-full border px-3 py-2',
+                    active && 'border-accent bg-accent-soft',
+                  )}
+                >
+                  <View className={cn('h-3 w-3 rounded-full', color?.className)} />
+                  <Typography className="text-sm font-semibold">
+                    {profileDisplayName(item, index)}
+                  </Typography>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <View className="border-border bg-surface gap-3 rounded-2xl border p-4">
+            <View className="gap-1.5">
+              <Typography className="text-sm font-semibold">Profile name (optional)</Typography>
+              <Input
+                placeholder={`Profile ${profiles.findIndex((item) => item.id === profile.id) + 1}`}
+                value={profile.name}
+                onChangeText={(value) => updateProfileMeta(value)}
+                autoCorrect={false}
+              />
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Typography className="text-muted text-xs">Color</Typography>
+              {PROFILE_COLORS.map((option) => (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${option.value} profile color`}
+                  accessibilityState={{ selected: option.value === profile.color }}
+                  onPress={() => updateProfileMeta(profile.name, option.value)}
+                  className={cn(
+                    'h-8 w-8 items-center justify-center rounded-full border-2',
+                    option.value === profile.color ? 'border-foreground' : 'border-transparent',
+                  )}
+                >
+                  <View className={cn('h-5 w-5 rounded-full', option.className)} />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {profiles.length > 1 ? (
+            <Button variant="secondary" onPress={() => router.push('/dining-together')}>
+              <Users color={accent} size={17} />
+              <Button.Label>Dining Together</Button.Label>
+            </Button>
+          ) : null}
+        </View>
+
         <View className="bg-surface-secondary gap-2 rounded-2xl p-4">
           <Typography className="text-sm font-semibold">In use right now</Typography>
           <Typography className="text-muted text-sm leading-6">
@@ -171,8 +265,13 @@ export default function ProfileScreen() {
         <Separator />
 
         <Button variant="danger-soft" size="md" onPress={reset}>
-          Clear my profile
+          Clear this profile
         </Button>
+        {profiles.length > 1 ? (
+          <Button variant="ghost" size="md" onPress={removeActiveProfile}>
+            Remove this profile
+          </Button>
+        ) : null}
 
         <Disclaimer />
       </ScrollView>
