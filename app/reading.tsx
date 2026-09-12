@@ -39,8 +39,12 @@ export default function ReadingScreen() {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [attempt, setAttempt] = useState(0);
   const startedFor = useRef<string | null>(null);
+  /** Set once the scan is saved: saving clears the draft photo, and that must not read as "no photo". */
+  const handedOver = useRef(false);
 
   useEffect(() => {
+    if (handedOver.current) return undefined;
+
     if (!draftPhoto) {
       router.replace('/(tabs)/scan');
       return undefined;
@@ -61,6 +65,7 @@ export default function ReadingScreen() {
         if (cancelled) return;
         setStage('matching');
         const analysis = analyseMenu(read.lines, profile);
+        handedOver.current = true;
         const id = saveScan({
           photoUri: draftPhoto.uri,
           place: read.place ?? 'Menu',
