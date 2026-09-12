@@ -171,11 +171,13 @@ export default function HistoryScreen() {
         <Dialog.Portal>
           <Dialog.Overlay />
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={
+              Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
+            }
             className="flex-1 justify-center"
             pointerEvents="box-none"
           >
-            <Dialog.Content>
+            <Dialog.Content isSwipeable={false}>
               <Dialog.Close variant="ghost" />
               <View className="mb-5 gap-1.5">
                 <Dialog.Title>Name this menu</Dialog.Title>
@@ -185,7 +187,6 @@ export default function HistoryScreen() {
               </View>
 
               <Input
-                autoFocus
                 autoCorrect={false}
                 maxLength={60}
                 onChangeText={setScanName}
