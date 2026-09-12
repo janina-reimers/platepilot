@@ -18,7 +18,9 @@ export default function HomeScreen() {
 
   return (
     <ScrollView className="bg-background flex-1" contentContainerClassName="gap-5 px-5 pt-2 pb-10">
-      <BrandLogo size={126} />
+      <View className="items-center">
+        <BrandLogo size={180} />
+      </View>
 
       <View className="gap-2">
         <Typography type="h2" className="text-center">
