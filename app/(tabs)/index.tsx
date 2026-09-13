@@ -24,7 +24,7 @@ export default function HomeScreen() {
 
       <View className="gap-2">
         <Typography type="h2" className="text-center">
-          What&apos;s on the menu today?
+          Not sure what to order?
         </Typography>
         <Typography className="text-muted text-sm leading-6">
           Simply scan the menu. PlatePilot analyzes it for you and scores each dish against your
