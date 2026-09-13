@@ -8,12 +8,21 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { Disclaimer } from '@/components/Disclaimer';
 import { SelectableRow } from '@/components/SelectableRow';
 import { matchCustomAvoidText } from '@/lib/analysis/profile';
-import type { Strictness } from '@/lib/analysis/types';
+import type { ProfileColor, Strictness } from '@/lib/analysis/types';
 import { INTOLERANCES } from '@/lib/data/triggers';
 import { useProfileStore } from '@/lib/store/profile';
 import { cn } from '@/lib/utils';
 
-const STEPS = ['Welcome', 'Intolerances', 'Anything else', 'Review'] as const;
+const STEPS = ['Welcome', 'Your profile', 'Intolerances', 'Anything else', 'Review'] as const;
+
+const PROFILE_COLORS: { value: ProfileColor; label: string; className: string }[] = [
+  { value: 'teal', label: 'Teal', className: 'bg-profile-teal' },
+  { value: 'blue', label: 'Blue', className: 'bg-profile-blue' },
+  { value: 'violet', label: 'Violet', className: 'bg-profile-violet' },
+  { value: 'orange', label: 'Orange', className: 'bg-profile-orange' },
+  { value: 'rose', label: 'Rose', className: 'bg-profile-rose' },
+  { value: 'green', label: 'Green', className: 'bg-profile-green' },
+];
 
 const CATEGORY_TITLES: Record<string, string> = {
   common: 'The most common ones',
@@ -30,6 +39,7 @@ export default function OnboardingScreen() {
   const setStrictness = useProfileStore((state) => state.setStrictness);
   const addCustomAvoid = useProfileStore((state) => state.addCustomAvoid);
   const removeCustomAvoid = useProfileStore((state) => state.removeCustomAvoid);
+  const updateProfileMeta = useProfileStore((state) => state.updateProfileMeta);
   const completeOnboarding = useProfileStore((state) => state.completeOnboarding);
 
   const [muted, accent] = useThemeColor(['muted', 'accent']);
@@ -54,6 +64,7 @@ export default function OnboardingScreen() {
   };
 
   const finish = () => {
+    updateProfileMeta(profile.name.trim());
     completeOnboarding();
     router.replace('/(tabs)');
   };
@@ -124,6 +135,59 @@ export default function OnboardingScreen() {
           ) : null}
 
           {step === 1 ? (
+            <View className="gap-5">
+              <View className="gap-2">
+                <Typography type="h3">Make this profile easy to recognise</Typography>
+                <Typography className="text-muted text-sm leading-6">
+                  Add a name and color if you plan to use more than one profile—for example, one for
+                  you and separate profiles for your kids.
+                </Typography>
+                <Typography className="text-muted text-sm leading-6">
+                  This is only for telling profiles apart. It does not change how PlatePilot checks
+                  dishes, and you can skip it or update it later.
+                </Typography>
+              </View>
+
+              <View className="border-border bg-surface gap-4 rounded-2xl border p-4">
+                <View className="gap-1.5">
+                  <Typography className="text-sm font-semibold">Profile name (optional)</Typography>
+                  <Input
+                    placeholder="For example: Me, Alex, or Kids"
+                    value={profile.name}
+                    onChangeText={(value) => updateProfileMeta(value)}
+                    autoCorrect={false}
+                    maxLength={40}
+                    returnKeyType="done"
+                  />
+                </View>
+
+                <View className="gap-2">
+                  <Typography className="text-sm font-semibold">Profile color</Typography>
+                  <View className="flex-row flex-wrap gap-3">
+                    {PROFILE_COLORS.map((option) => (
+                      <Pressable
+                        key={option.value}
+                        accessibilityRole="radio"
+                        accessibilityLabel={`${option.label} profile color`}
+                        accessibilityState={{ selected: option.value === profile.color }}
+                        onPress={() => updateProfileMeta(profile.name, option.value)}
+                        className={cn(
+                          'h-11 w-11 items-center justify-center rounded-full border-2',
+                          option.value === profile.color
+                            ? 'border-foreground'
+                            : 'border-transparent',
+                        )}
+                      >
+                        <View className={cn('h-7 w-7 rounded-full', option.className)} />
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            </View>
+          ) : null}
+
+          {step === 2 ? (
             <View className="gap-4">
               <Typography type="h3">What do you have trouble with?</Typography>
               <Typography className="text-muted text-sm leading-6">
@@ -162,7 +226,7 @@ export default function OnboardingScreen() {
             </View>
           ) : null}
 
-          {step === 2 ? (
+          {step === 3 ? (
             <View className="gap-4">
               <Typography type="h3">Anything else you cannot have?</Typography>
               <Typography className="text-muted text-sm leading-6">
@@ -219,9 +283,15 @@ export default function OnboardingScreen() {
             </View>
           ) : null}
 
-          {step === 3 ? (
+          {step === 4 ? (
             <View className="gap-4">
               <Typography type="h3">Here is your profile</Typography>
+
+              <ReviewBlock
+                title="Profile"
+                items={profile.name.trim() ? [profile.name.trim()] : []}
+                emptyText="No name added. It will appear as Profile 1."
+              />
 
               <ReviewBlock
                 title="You avoid"

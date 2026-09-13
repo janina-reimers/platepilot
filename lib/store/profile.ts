@@ -124,7 +124,7 @@ export const useProfileStore = create<ProfileState>()(
         set((state) =>
           updateActive(state, (profile) => ({
             ...profile,
-            name: name.trim().slice(0, 40),
+            name: name.slice(0, 40),
             color: color ?? profile.color,
           })),
         ),
